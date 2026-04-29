@@ -19,11 +19,29 @@ const frequencyLabels = {
   annual: "Anual",
 };
 
+const statusLabels = {
+  pending: "Pendiente",
+  paid: "Pagado",
+  planned: "Planificado",
+  overdue: "Vencido",
+};
+
+const categoryColors = {
+  fixed: "#3662e3",
+  additional: "#0f9f7a",
+  casual: "#f59f26",
+  card: "#b46a2a",
+  credit: "#7457d8",
+  future: "#16a7c4",
+  income: "#0f9f7a",
+};
+
 const state = {
   entries: loadLocalEntries(),
   month: currentMonth(),
   view: "dashboard",
   filter: "all",
+  statusFilter: "all",
   search: "",
 };
 
@@ -49,6 +67,13 @@ const els = {
   durationInput: document.querySelector("#durationInput"),
   paymentInput: document.querySelector("#paymentInput"),
   installmentsInput: document.querySelector("#installmentsInput"),
+  statusInput: document.querySelector("#statusInput"),
+  dueDayInput: document.querySelector("#dueDayInput"),
+  accountInput: document.querySelector("#accountInput"),
+  vendorInput: document.querySelector("#vendorInput"),
+  priorityInput: document.querySelector("#priorityInput"),
+  budgetInput: document.querySelector("#budgetInput"),
+  tagsInput: document.querySelector("#tagsInput"),
   notesInput: document.querySelector("#notesInput"),
   cancelEditBtn: document.querySelector("#cancelEditBtn"),
   incomeTotal: document.querySelector("#incomeTotal"),
@@ -59,6 +84,7 @@ const els = {
   categoryBars: document.querySelector("#categoryBars"),
   entriesTable: document.querySelector("#entriesTable"),
   filterCategory: document.querySelector("#filterCategory"),
+  filterStatus: document.querySelector("#filterStatus"),
   searchInput: document.querySelector("#searchInput"),
   cardList: document.querySelector("#cardList"),
   creditList: document.querySelector("#creditList"),
@@ -69,6 +95,23 @@ const els = {
   exportBtn: document.querySelector("#exportBtn"),
   clearBtn: document.querySelector("#clearBtn"),
   emptyTemplate: document.querySelector("#emptyStateTemplate"),
+  openEntryBtn: document.querySelector("#openEntryBtn"),
+  closeEntryBtn: document.querySelector("#closeEntryBtn"),
+  entryModal: document.querySelector("#entryModal"),
+  savingsRate: document.querySelector("#savingsRate"),
+  incomeHint: document.querySelector("#incomeHint"),
+  expenseHint: document.querySelector("#expenseHint"),
+  balanceHint: document.querySelector("#balanceHint"),
+  committedHint: document.querySelector("#committedHint"),
+  trendChart: document.querySelector("#trendChart"),
+  donutChart: document.querySelector("#donutChart"),
+  donutLegend: document.querySelector("#donutLegend"),
+  donutTotal: document.querySelector("#donutTotal"),
+  alertsList: document.querySelector("#alertsList"),
+  alertCount: document.querySelector("#alertCount"),
+  topExpenses: document.querySelector("#topExpenses"),
+  topTotal: document.querySelector("#topTotal"),
+  toast: document.querySelector("#toast"),
 };
 
 init();
@@ -100,10 +143,18 @@ function bindEvents() {
     saveEntry(readForm());
   });
 
-  els.cancelEditBtn.addEventListener("click", resetForm);
+  els.cancelEditBtn.addEventListener("click", () => {
+    resetForm();
+    closeEntryModal();
+  });
 
   els.filterCategory.addEventListener("change", (event) => {
     state.filter = event.target.value;
+    renderEntriesTable();
+  });
+
+  els.filterStatus.addEventListener("change", (event) => {
+    state.statusFilter = event.target.value;
     renderEntriesTable();
   });
 
@@ -112,9 +163,26 @@ function bindEvents() {
     renderEntriesTable();
   });
 
+  document.querySelectorAll("[data-preset]").forEach((button) => {
+    button.addEventListener("click", () => applyPreset(button.dataset.preset));
+  });
+
+  els.openEntryBtn.addEventListener("click", () => {
+    resetForm();
+    openEntryModal();
+  });
+  els.closeEntryBtn.addEventListener("click", closeEntryModal);
+  els.entryModal.addEventListener("click", (event) => {
+    if (event.target === els.entryModal) closeEntryModal();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeEntryModal();
+  });
+
   els.seedBtn.addEventListener("click", seedDemo);
   els.exportBtn.addEventListener("click", exportJson);
   els.clearBtn.addEventListener("click", clearAll);
+  window.addEventListener("resize", () => renderDashboard());
 }
 
 function readForm() {
@@ -130,6 +198,13 @@ function readForm() {
     duration: Number(els.durationInput.value || 0),
     payment: els.paymentInput.value,
     installments: Number(els.installmentsInput.value || 1),
+    status: els.statusInput.value,
+    dueDay: Number(els.dueDayInput.value || 0),
+    account: els.accountInput.value.trim(),
+    vendor: els.vendorInput.value.trim(),
+    priority: els.priorityInput.value,
+    budget: Number(els.budgetInput.value || 0),
+    tags: parseTags(els.tagsInput.value),
     notes: els.notesInput.value.trim(),
     createdAt: new Date().toISOString(),
   };
@@ -147,6 +222,7 @@ async function saveEntry(entry) {
 
   await persist(entry);
   resetForm();
+  closeEntryModal();
   render();
 }
 
@@ -158,7 +234,22 @@ function resetForm() {
   els.categoryInput.value = "fixed";
   els.frequencyInput.value = "monthly";
   els.paymentInput.value = "cash";
+  els.statusInput.value = "pending";
+  els.priorityInput.value = "normal";
   els.startInput.value = state.month;
+}
+
+function openEntryModal() {
+  els.entryModal.classList.add("open");
+  els.entryModal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+  setTimeout(() => els.nameInput.focus(), 0);
+}
+
+function closeEntryModal() {
+  els.entryModal.classList.remove("open");
+  els.entryModal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modal-open");
 }
 
 function editEntry(id) {
@@ -176,9 +267,17 @@ function editEntry(id) {
   els.durationInput.value = entry.duration || "";
   els.paymentInput.value = entry.payment;
   els.installmentsInput.value = entry.installments || 1;
+  els.statusInput.value = entry.status || "pending";
+  els.dueDayInput.value = entry.dueDay || "";
+  els.accountInput.value = entry.account || "";
+  els.vendorInput.value = entry.vendor || "";
+  els.priorityInput.value = entry.priority || "normal";
+  els.budgetInput.value = entry.budget || "";
+  els.tagsInput.value = (entry.tags || []).join(", ");
   els.notesInput.value = entry.notes || "";
   state.view = "dashboard";
   render();
+  openEntryModal();
   els.nameInput.focus();
 }
 
@@ -207,14 +306,24 @@ function renderShell() {
 
 function renderDashboard() {
   const active = entriesForMonth(state.month);
-  const income = sum(active.filter((item) => item.kind === "income"));
-  const expenses = sum(active.filter((item) => item.kind === "expense"));
-  const committed = sum(active.filter((item) => item.kind === "expense" && item.frequency !== "once"));
+  const incomes = active.filter((item) => item.kind === "income");
+  const expenseItems = active.filter((item) => item.kind === "expense");
+  const income = sum(incomes);
+  const expenses = sum(expenseItems);
+  const balance = income - expenses;
+  const committed = sum(expenseItems.filter((item) => item.frequency !== "once"));
+  const committedRate = income ? Math.round((committed / income) * 100) : 0;
+  const savingsRate = income ? Math.round((balance / income) * 100) : 0;
 
   els.incomeTotal.textContent = money(income);
   els.expenseTotal.textContent = money(expenses);
-  els.balanceTotal.textContent = money(income - expenses);
+  els.balanceTotal.textContent = money(balance);
   els.committedTotal.textContent = money(committed);
+  els.incomeHint.textContent = `${incomes.length} ingresos`;
+  els.expenseHint.textContent = `${expenseItems.length} gastos`;
+  els.balanceHint.textContent = balance >= 0 ? "Margen positivo" : "Deficit mensual";
+  els.committedHint.textContent = `${committedRate}% de ingresos`;
+  els.savingsRate.textContent = `${savingsRate}% ahorro`;
   els.itemCount.textContent = `${active.length} items`;
 
   const byCategory = active
@@ -230,6 +339,10 @@ function renderDashboard() {
   els.categoryBars.innerHTML = "";
   if (!rows.length) {
     els.categoryBars.append(emptyState());
+    renderDonut([]);
+    renderAlerts({ income, expenses, balance, committed, committedRate, expenseItems });
+    renderTopExpenses(expenseItems);
+    renderTrendChart();
     return;
   }
 
@@ -242,23 +355,29 @@ function renderDashboard() {
         <span>${money(total)}</span>
       </div>
       <div class="bar-track">
-        <div class="bar-fill" style="width: ${Math.round((total / max) * 100)}%"></div>
+        <div class="bar-fill" style="width: ${Math.round((total / max) * 100)}%; background: ${categoryColors[category]}"></div>
       </div>
     `;
     els.categoryBars.append(row);
   });
+
+  renderDonut(rows);
+  renderAlerts({ income, expenses, balance, committed, committedRate, expenseItems });
+  renderTopExpenses(expenseItems);
+  renderTrendChart();
 }
 
 function renderEntriesTable() {
   const rows = state.entries
     .filter((item) => state.filter === "all" || item.category === state.filter)
-    .filter((item) => !state.search || item.name.toLowerCase().includes(state.search))
+    .filter((item) => state.statusFilter === "all" || entryStatus(item) === state.statusFilter)
+    .filter((item) => matchesSearch(item, state.search))
     .sort((a, b) => a.start.localeCompare(b.start) || a.name.localeCompare(b.name));
 
   els.entriesTable.innerHTML = "";
   if (!rows.length) {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td colspan="7">${emptyState().outerHTML}</td>`;
+    tr.innerHTML = `<td colspan="9">${emptyState().outerHTML}</td>`;
     els.entriesTable.append(tr);
     return;
   }
@@ -274,6 +393,8 @@ function renderEntriesTable() {
       <td>${frequencyLabels[item.frequency]}</td>
       <td>${periodLabel(item)}</td>
       <td>${paymentLabel(item)}</td>
+      <td><span class="status-pill ${entryStatus(item)}">${statusLabels[entryStatus(item)]}</span></td>
+      <td>${dueLabel(item)}</td>
       <td>${money(monthlyAmount(item, state.month))}</td>
       <td>
         <div class="row-actions">
@@ -336,6 +457,202 @@ function renderForecast() {
     `;
     els.forecastGrid.append(div);
   });
+}
+
+function renderTopExpenses(expenseItems) {
+  const rows = expenseItems
+    .map((item) => ({ ...item, monthAmount: monthlyAmount(item, state.month) }))
+    .sort((a, b) => b.monthAmount - a.monthAmount)
+    .slice(0, 5);
+
+  els.topExpenses.innerHTML = "";
+  els.topTotal.textContent = `${rows.length} principales`;
+
+  if (!rows.length) {
+    els.topExpenses.append(emptyState());
+    return;
+  }
+
+  rows.forEach((item) => {
+    const div = document.createElement("div");
+    div.className = "top-card";
+    div.innerHTML = `
+      <strong>${escapeHtml(item.name)}</strong>
+      <span>${money(item.monthAmount)}</span>
+      <small class="muted">${categoryLabels[item.category]} - ${frequencyLabels[item.frequency]}</small>
+    `;
+    els.topExpenses.append(div);
+  });
+}
+
+function renderAlerts(summary) {
+  const alerts = [];
+  const cardTotal = sum(summary.expenseItems.filter((item) => item.category === "card"));
+  const creditTotal = sum(summary.expenseItems.filter((item) => item.category === "credit"));
+  const futureCount = state.entries.filter((item) => item.category === "future" && monthDiff(state.month, item.start) > 0).length;
+  const overdueCount = entriesForMonth(state.month).filter((item) => entryStatus(item) === "overdue").length;
+  const budgetAlerts = budgetUsage(summary.expenseItems).filter((item) => item.budget > 0 && item.total > item.budget);
+
+  if (summary.income === 0) {
+    alerts.push({ level: "warning", title: "Sin ingresos", text: "Carga ingresos para medir margen real." });
+  }
+  if (overdueCount > 0) {
+    alerts.push({ level: "danger", title: "Vencimientos", text: `${overdueCount} movimientos vencidos.` });
+  }
+  if (budgetAlerts.length > 0) {
+    alerts.push({ level: "warning", title: "Presupuesto", text: `${budgetAlerts.length} rubros pasados de limite.` });
+  }
+  if (summary.balance < 0) {
+    alerts.push({ level: "danger", title: "Deficit", text: `${money(Math.abs(summary.balance))} arriba de ingresos.` });
+  }
+  if (summary.committedRate > 70) {
+    alerts.push({ level: "warning", title: "Fijos altos", text: `${summary.committedRate}% comprometido antes de casuales.` });
+  }
+  if (cardTotal + creditTotal > summary.income * 0.35 && summary.income > 0) {
+    alerts.push({ level: "warning", title: "Deuda pesada", text: `${money(cardTotal + creditTotal)} entre tarjetas y creditos.` });
+  }
+  if (futureCount > 0) {
+    alerts.push({ level: "good", title: "Plan futuro", text: `${futureCount} gastos futuros cargados.` });
+  }
+  if (!alerts.length) {
+    alerts.push({ level: "good", title: "Mes sano", text: "Sin alertas fuertes por ahora." });
+  }
+
+  els.alertsList.innerHTML = "";
+  els.alertCount.textContent = String(alerts.length);
+  alerts.slice(0, 4).forEach((alert) => {
+    const div = document.createElement("div");
+    div.className = `alert-item ${alert.level}`;
+    div.innerHTML = `
+      <strong><span>${alert.title}</span></strong>
+      <div class="muted">${alert.text}</div>
+    `;
+    els.alertsList.append(div);
+  });
+}
+
+function renderDonut(rows) {
+  const canvas = els.donutChart;
+  const ctx = canvas.getContext("2d");
+  const size = canvas.width;
+  const center = size / 2;
+  const radius = 78;
+  const total = rows.reduce((acc, [, value]) => acc + value, 0);
+
+  ctx.clearRect(0, 0, size, size);
+  els.donutLegend.innerHTML = "";
+  els.donutTotal.textContent = money(total);
+
+  if (!total) {
+    drawEmptyDonut(ctx, center, radius);
+    return;
+  }
+
+  let start = -Math.PI / 2;
+  rows.forEach(([category, value]) => {
+    const angle = (value / total) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.arc(center, center, radius, start, start + angle);
+    ctx.lineWidth = 28;
+    ctx.strokeStyle = categoryColors[category];
+    ctx.stroke();
+    start += angle;
+
+    const row = document.createElement("div");
+    row.className = "legend-row";
+    row.innerHTML = `
+      <span class="legend-dot" style="background: ${categoryColors[category]}"></span>
+      <span>${categoryLabels[category]}</span>
+      <strong>${Math.round((value / total) * 100)}%</strong>
+    `;
+    els.donutLegend.append(row);
+  });
+
+  ctx.fillStyle = "#263445";
+  ctx.font = "800 18px Inter, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(`${rows.length}`, center, center - 2);
+  ctx.fillStyle = "#647084";
+  ctx.font = "700 12px Inter, sans-serif";
+  ctx.fillText("rubros", center, center + 16);
+}
+
+function drawEmptyDonut(ctx, center, radius) {
+  ctx.beginPath();
+  ctx.arc(center, center, radius, 0, Math.PI * 2);
+  ctx.lineWidth = 28;
+  ctx.strokeStyle = "#dbe3ee";
+  ctx.stroke();
+}
+
+function renderTrendChart() {
+  const canvas = els.trendChart;
+  const ctx = canvas.getContext("2d");
+  const rect = canvas.getBoundingClientRect();
+  const scale = window.devicePixelRatio || 1;
+  const width = Math.max(Math.floor(rect.width * scale), 320);
+  const height = Math.floor(180 * scale);
+  canvas.width = width;
+  canvas.height = height;
+  ctx.scale(scale, scale);
+
+  const cssWidth = width / scale;
+  const cssHeight = height / scale;
+  const pad = 28;
+  const months = nextMonths(state.month, 12);
+  const points = months.map((month) => {
+    const rows = entriesForMonth(month);
+    const income = sum(rows.filter((item) => item.kind === "income"), month);
+    const expenses = sum(rows.filter((item) => item.kind === "expense"), month);
+    return { month, income, expenses, balance: income - expenses };
+  });
+  const max = Math.max(...points.flatMap((point) => [point.income, point.expenses]), 1);
+
+  ctx.clearRect(0, 0, cssWidth, cssHeight);
+  drawGrid(ctx, cssWidth, cssHeight, pad);
+  drawLine(ctx, points.map((point) => point.income), max, cssWidth, cssHeight, pad, "#0f9f7a");
+  drawLine(ctx, points.map((point) => point.expenses), max, cssWidth, cssHeight, pad, "#b46a2a");
+  drawLine(ctx, points.map((point) => Math.max(point.balance, 0)), max, cssWidth, cssHeight, pad, "#3662e3");
+
+  ctx.fillStyle = "#647084";
+  ctx.font = "700 11px Inter, sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText("Ingresos", pad, 14);
+  ctx.fillStyle = "#0f9f7a";
+  ctx.fillRect(pad + 52, 6, 18, 4);
+  ctx.fillStyle = "#647084";
+  ctx.fillText("Gastos", pad + 86, 14);
+  ctx.fillStyle = "#b46a2a";
+  ctx.fillRect(pad + 128, 6, 18, 4);
+}
+
+function drawGrid(ctx, width, height, pad) {
+  ctx.strokeStyle = "#e5ebf3";
+  ctx.lineWidth = 1;
+  for (let index = 0; index < 4; index += 1) {
+    const y = pad + ((height - pad * 2) / 3) * index;
+    ctx.beginPath();
+    ctx.moveTo(pad, y);
+    ctx.lineTo(width - pad, y);
+    ctx.stroke();
+  }
+}
+
+function drawLine(ctx, values, max, width, height, pad, color) {
+  const graphWidth = width - pad * 2;
+  const graphHeight = height - pad * 2;
+  ctx.beginPath();
+  values.forEach((value, index) => {
+    const x = pad + (graphWidth / Math.max(values.length - 1, 1)) * index;
+    const y = pad + graphHeight - (value / max) * graphHeight;
+    if (index === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.stroke();
 }
 
 function entriesForMonth(month) {
@@ -456,6 +773,13 @@ function makeEntry(name, kind, category, amount, start, frequency, duration, pay
     duration,
     payment,
     installments,
+    status: category === "future" ? "planned" : "pending",
+    dueDay: 0,
+    account: "",
+    vendor: "",
+    priority: "normal",
+    budget: 0,
+    tags: [],
     notes: "",
     createdAt: new Date().toISOString(),
   };
@@ -503,6 +827,7 @@ function createSupabaseClient() {
 
 async function syncFromSupabase() {
   if (!supabaseClient) return;
+  document.body.classList.add("is-syncing");
   const { data, error } = await supabaseClient
     .from(tableName())
     .select("*")
@@ -510,46 +835,66 @@ async function syncFromSupabase() {
 
   if (error) {
     console.error("Supabase sync failed:", error.message);
+    document.body.classList.remove("is-syncing");
+    showToast("No se pudo sincronizar", "warning");
     return;
   }
 
   state.entries = data.map(fromDbEntry);
   persistLocal();
   render();
+  document.body.classList.remove("is-syncing");
+  showToast("Datos sincronizados", "success");
 }
 
 async function persist(entry) {
   persistLocal();
-  if (!supabaseClient) return;
+  if (!supabaseClient) {
+    showToast("Movimiento guardado", "success");
+    return;
+  }
 
   const { error } = await supabaseClient
     .from(tableName())
     .upsert(toDbEntry(entry), { onConflict: "id" });
 
   if (error) console.error("Supabase save failed:", error.message);
+  showToast(error ? "Guardado local, Supabase fallo" : "Movimiento guardado", error ? "warning" : "success");
 }
 
 async function persistMany(entries) {
   persistLocal();
-  if (!supabaseClient) return;
+  if (!supabaseClient) {
+    showToast("Ejemplo cargado", "success");
+    return;
+  }
 
   const { error } = await supabaseClient
     .from(tableName())
     .upsert(entries.map(toDbEntry), { onConflict: "id" });
 
   if (error) console.error("Supabase bulk save failed:", error.message);
+  showToast(error ? "Ejemplo guardado local" : "Ejemplo cargado", error ? "warning" : "success");
 }
 
 async function deleteRemote(id) {
-  if (!supabaseClient) return;
+  if (!supabaseClient) {
+    showToast("Movimiento borrado", "success");
+    return;
+  }
   const { error } = await supabaseClient.from(tableName()).delete().eq("id", id);
   if (error) console.error("Supabase delete failed:", error.message);
+  showToast(error ? "Borrado local, Supabase fallo" : "Movimiento borrado", error ? "warning" : "success");
 }
 
 async function clearRemote() {
-  if (!supabaseClient) return;
+  if (!supabaseClient) {
+    showToast("Datos borrados", "success");
+    return;
+  }
   const { error } = await supabaseClient.from(tableName()).delete().not("id", "is", null);
   if (error) console.error("Supabase clear failed:", error.message);
+  showToast(error ? "Borrado local, Supabase fallo" : "Datos borrados", error ? "warning" : "success");
 }
 
 function tableName() {
@@ -568,6 +913,13 @@ function toDbEntry(entry) {
     duration: entry.duration || 0,
     payment: entry.payment,
     installments: entry.installments || 1,
+    status: entry.status || "pending",
+    due_day: entry.dueDay || 0,
+    account: entry.account || "",
+    vendor: entry.vendor || "",
+    priority: entry.priority || "normal",
+    budget: entry.budget || 0,
+    tags: entry.tags || [],
     notes: entry.notes || "",
     created_at: entry.createdAt || new Date().toISOString(),
   };
@@ -585,7 +937,85 @@ function fromDbEntry(row) {
     duration: Number(row.duration || 0),
     payment: row.payment,
     installments: Number(row.installments || 1),
+    status: row.status || "pending",
+    dueDay: Number(row.due_day || 0),
+    account: row.account || "",
+    vendor: row.vendor || "",
+    priority: row.priority || "normal",
+    budget: Number(row.budget || 0),
+    tags: row.tags || [],
     notes: row.notes || "",
     createdAt: row.created_at,
   };
+}
+
+function applyPreset(category) {
+  els.categoryInput.value = category;
+  els.kindInput.value = category === "income" ? "income" : "expense";
+  if (category === "card") els.paymentInput.value = "card";
+  if (category === "credit") els.paymentInput.value = "credit";
+  if (category === "future") els.statusInput.value = "planned";
+  if (category === "fixed") els.frequencyInput.value = "monthly";
+}
+
+function parseTags(value) {
+  return value
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean)
+    .slice(0, 8);
+}
+
+function matchesSearch(item, search) {
+  if (!search) return true;
+  const haystack = [
+    item.name,
+    item.notes,
+    item.account,
+    item.vendor,
+    ...(item.tags || []),
+  ].join(" ").toLowerCase();
+  return haystack.includes(search);
+}
+
+function entryStatus(entry) {
+  if (entry.status === "paid") return "paid";
+  if (entry.status === "planned") return "planned";
+  if (entry.status === "overdue") return "overdue";
+  if (entry.dueDay && isActiveInMonth(entry, state.month)) {
+    const now = new Date();
+    const [year, month] = state.month.split("-").map(Number);
+    const dueDate = new Date(year, month - 1, entry.dueDay);
+    if (state.month === currentMonth() && dueDate < new Date(now.getFullYear(), now.getMonth(), now.getDate())) {
+      return "overdue";
+    }
+  }
+  return "pending";
+}
+
+function dueLabel(entry) {
+  if (!entry.dueDay) return "-";
+  return `Dia ${entry.dueDay}`;
+}
+
+function budgetUsage(expenseItems) {
+  const usage = expenseItems.reduce((acc, item) => {
+    if (!acc[item.category]) acc[item.category] = { category: item.category, total: 0, budget: 0 };
+    acc[item.category].total += monthlyAmount(item, state.month);
+    acc[item.category].budget = Math.max(acc[item.category].budget, item.budget || 0);
+    return acc;
+  }, {});
+  return Object.values(usage);
+}
+
+let toastTimer;
+
+function showToast(message, type = "success") {
+  if (!els.toast) return;
+  clearTimeout(toastTimer);
+  els.toast.textContent = message;
+  els.toast.className = `toast show ${type}`;
+  toastTimer = setTimeout(() => {
+    els.toast.className = "toast";
+  }, 2400);
 }

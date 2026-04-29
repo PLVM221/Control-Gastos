@@ -9,9 +9,24 @@ create table if not exists public.entries (
   duration integer not null default 0,
   payment text not null check (payment in ('cash', 'transfer', 'card', 'credit')),
   installments integer not null default 1,
+  status text not null default 'pending' check (status in ('pending', 'paid', 'planned', 'overdue')),
+  due_day integer not null default 0,
+  account text not null default '',
+  vendor text not null default '',
+  priority text not null default 'normal' check (priority in ('low', 'normal', 'high')),
+  budget numeric not null default 0,
+  tags text[] not null default '{}',
   notes text not null default '',
   created_at timestamptz not null default now()
 );
+
+alter table public.entries add column if not exists status text not null default 'pending';
+alter table public.entries add column if not exists due_day integer not null default 0;
+alter table public.entries add column if not exists account text not null default '';
+alter table public.entries add column if not exists vendor text not null default '';
+alter table public.entries add column if not exists priority text not null default 'normal';
+alter table public.entries add column if not exists budget numeric not null default 0;
+alter table public.entries add column if not exists tags text[] not null default '{}';
 
 alter table public.entries enable row level security;
 

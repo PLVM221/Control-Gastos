@@ -4,6 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Control Gastos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -36,7 +39,11 @@
           <p class="eyebrow">Resumen mensual</p>
           <h2 id="monthTitle">Mes actual</h2>
         </div>
+        <div class="status-strip">
+          <strong id="savingsRate">0%</strong>
+        </div>
         <div class="toolbar-actions">
+          <button class="primary-action" id="openEntryBtn" type="button">Nuevo gasto</button>
           <button class="icon-button" id="seedBtn" type="button" title="Cargar ejemplo" aria-label="Cargar ejemplo">+</button>
           <button class="icon-button" id="exportBtn" type="button" title="Exportar JSON" aria-label="Exportar JSON">E</button>
           <button class="icon-button danger" id="clearBtn" type="button" title="Borrar todo" aria-label="Borrar todo">X</button>
@@ -45,99 +52,59 @@
 
       <section class="view active" id="dashboardView">
         <div class="metrics-grid">
-          <article class="metric">
+          <article class="metric metric-income">
             <span>Ingresos</span>
             <strong id="incomeTotal">$0</strong>
+            <small id="incomeHint">0 movimientos</small>
           </article>
-          <article class="metric">
+          <article class="metric metric-expense">
             <span>Gastos</span>
             <strong id="expenseTotal">$0</strong>
+            <small id="expenseHint">0 movimientos</small>
           </article>
-          <article class="metric">
+          <article class="metric metric-balance">
             <span>Disponible</span>
             <strong id="balanceTotal">$0</strong>
+            <small id="balanceHint">Balance mensual</small>
           </article>
-          <article class="metric">
+          <article class="metric metric-committed">
             <span>Comprometido</span>
             <strong id="committedTotal">$0</strong>
+            <small id="committedHint">0% de ingresos</small>
           </article>
         </div>
 
-        <div class="content-grid">
-          <section class="panel">
+        <div class="insight-grid">
+          <section class="panel chart-panel">
             <div class="panel-head">
-              <h3>Carga rapida</h3>
-              <span id="formMode">Nuevo</span>
+              <h3>Tendencia</h3>
+              <span>12 meses</span>
             </div>
-            <form id="entryForm" class="entry-form">
-              <input id="editingId" type="hidden">
-              <label>Concepto
-                <input id="nameInput" required maxlength="80" placeholder="Alquiler, supermercado, sueldo">
-              </label>
-              <div class="form-row">
-                <label>Tipo
-                  <select id="kindInput">
-                    <option value="expense">Gasto</option>
-                    <option value="income">Ingreso</option>
-                  </select>
-                </label>
-                <label>Categoria
-                  <select id="categoryInput">
-                    <option value="fixed">Fijo</option>
-                    <option value="additional">Adicional</option>
-                    <option value="casual">Casual</option>
-                    <option value="card">Tarjeta</option>
-                    <option value="credit">Credito</option>
-                    <option value="future">Futuro</option>
-                    <option value="income">Ingreso</option>
-                  </select>
-                </label>
-              </div>
-              <div class="form-row">
-                <label>Monto
-                  <input id="amountInput" required type="number" min="0" step="0.01" placeholder="0">
-                </label>
-                <label>Inicio
-                  <input id="startInput" required type="month">
-                </label>
-              </div>
-              <div class="form-row">
-                <label>Frecuencia
-                  <select id="frequencyInput">
-                    <option value="monthly">Mensual</option>
-                    <option value="once">Unica vez</option>
-                    <option value="weekly">Semanal</option>
-                    <option value="annual">Anual</option>
-                  </select>
-                </label>
-                <label>Duracion
-                  <input id="durationInput" type="number" min="0" step="1" placeholder="0 = sin fin">
-                </label>
-              </div>
-              <div class="form-row">
-                <label>Medio
-                  <select id="paymentInput">
-                    <option value="cash">Efectivo/debito</option>
-                    <option value="transfer">Transferencia</option>
-                    <option value="card">Tarjeta</option>
-                    <option value="credit">Credito</option>
-                  </select>
-                </label>
-                <label>Cuotas
-                  <input id="installmentsInput" type="number" min="1" step="1" placeholder="1">
-                </label>
-              </div>
-              <label>Notas
-                <textarea id="notesInput" rows="3" placeholder="Vencimiento, banco, detalle"></textarea>
-              </label>
-              <div class="form-actions">
-                <button class="secondary" id="cancelEditBtn" type="button">Cancelar</button>
-                <button type="submit">Guardar</button>
-              </div>
-            </form>
+            <canvas id="trendChart" height="180" aria-label="Tendencia mensual"></canvas>
+          </section>
+
+          <section class="panel chart-panel">
+            <div class="panel-head">
+              <h3>Mix de gastos</h3>
+              <span id="donutTotal">$0</span>
+            </div>
+            <div class="donut-layout">
+              <canvas id="donutChart" width="190" height="190" aria-label="Distribucion de gastos"></canvas>
+              <div class="legend" id="donutLegend"></div>
+            </div>
           </section>
 
           <section class="panel">
+            <div class="panel-head">
+              <h3>Alertas</h3>
+              <span id="alertCount">0</span>
+            </div>
+            <div class="list compact" id="alertsList"></div>
+          </section>
+        </div>
+
+        <div class="content-grid">
+          <section class="panel wide">
             <div class="panel-head">
               <h3>Distribucion</h3>
               <span id="itemCount">0 items</span>
@@ -145,6 +112,14 @@
             <div class="bars" id="categoryBars"></div>
           </section>
         </div>
+
+        <section class="panel wide">
+          <div class="panel-head">
+            <h3>Top gastos del mes</h3>
+            <span id="topTotal">0 principales</span>
+          </div>
+          <div class="top-expenses" id="topExpenses"></div>
+        </section>
       </section>
 
       <section class="view" id="itemsView">
@@ -162,6 +137,13 @@
                 <option value="future">Futuros</option>
                 <option value="income">Ingresos</option>
               </select>
+              <select id="filterStatus">
+                <option value="all">Todos los estados</option>
+                <option value="pending">Pendientes</option>
+                <option value="paid">Pagados</option>
+                <option value="planned">Planificados</option>
+                <option value="overdue">Vencidos</option>
+              </select>
               <input id="searchInput" placeholder="Buscar">
             </div>
           </div>
@@ -174,6 +156,8 @@
                   <th>Frecuencia</th>
                   <th>Periodo</th>
                   <th>Medio</th>
+                  <th>Estado</th>
+                  <th>Vence</th>
                   <th>Monto mes</th>
                   <th></th>
                 </tr>
@@ -214,6 +198,131 @@
       </section>
     </main>
   </div>
+
+  <div class="modal-backdrop" id="entryModal" aria-hidden="true">
+    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="entryModalTitle">
+      <div class="panel-head">
+        <h3 id="entryModalTitle">Carga rapida</h3>
+        <div class="modal-actions">
+          <span id="formMode">Nuevo</span>
+          <button class="icon-button" id="closeEntryBtn" type="button" aria-label="Cerrar">X</button>
+        </div>
+      </div>
+      <form id="entryForm" class="entry-form">
+        <input id="editingId" type="hidden">
+        <label>Concepto
+          <input id="nameInput" required maxlength="80" placeholder="Alquiler, supermercado, sueldo">
+        </label>
+        <div class="form-row">
+          <label>Tipo
+            <select id="kindInput">
+              <option value="expense">Gasto</option>
+              <option value="income">Ingreso</option>
+            </select>
+          </label>
+          <label>Categoria
+            <select id="categoryInput">
+              <option value="fixed">Fijo</option>
+              <option value="additional">Adicional</option>
+              <option value="casual">Casual</option>
+              <option value="card">Tarjeta</option>
+              <option value="credit">Credito</option>
+              <option value="future">Futuro</option>
+              <option value="income">Ingreso</option>
+            </select>
+          </label>
+        </div>
+        <div class="form-row">
+          <label>Monto
+            <input id="amountInput" required type="number" min="0" step="0.01" placeholder="0">
+          </label>
+          <label>Inicio
+            <input id="startInput" required type="month">
+          </label>
+        </div>
+        <div class="form-row">
+          <label>Frecuencia
+            <select id="frequencyInput">
+              <option value="monthly">Mensual</option>
+              <option value="once">Unica vez</option>
+              <option value="weekly">Semanal</option>
+              <option value="annual">Anual</option>
+            </select>
+          </label>
+          <label>Duracion
+            <input id="durationInput" type="number" min="0" step="1" placeholder="0 = sin fin">
+          </label>
+        </div>
+        <div class="form-row">
+          <label>Medio
+            <select id="paymentInput">
+              <option value="cash">Efectivo/debito</option>
+              <option value="transfer">Transferencia</option>
+              <option value="card">Tarjeta</option>
+              <option value="credit">Credito</option>
+            </select>
+          </label>
+          <label>Cuotas
+            <input id="installmentsInput" type="number" min="1" step="1" placeholder="1">
+          </label>
+        </div>
+        <div class="quick-chips" aria-label="Atajos de categoria">
+          <button type="button" data-preset="fixed">Fijo</button>
+          <button type="button" data-preset="card">Tarjeta</button>
+          <button type="button" data-preset="credit">Credito</button>
+          <button type="button" data-preset="future">Futuro</button>
+        </div>
+        <details class="advanced-fields">
+          <summary>Mas datos</summary>
+          <div class="form-row">
+            <label>Estado
+              <select id="statusInput">
+                <option value="pending">Pendiente</option>
+                <option value="paid">Pagado</option>
+                <option value="planned">Planificado</option>
+                <option value="overdue">Vencido</option>
+              </select>
+            </label>
+            <label>Vence dia
+              <input id="dueDayInput" type="number" min="1" max="31" step="1" placeholder="1-31">
+            </label>
+          </div>
+          <div class="form-row">
+            <label>Cuenta
+              <input id="accountInput" maxlength="60" placeholder="Banco, billetera, efectivo">
+            </label>
+            <label>Comercio
+              <input id="vendorInput" maxlength="80" placeholder="Proveedor o local">
+            </label>
+          </div>
+          <div class="form-row">
+            <label>Prioridad
+              <select id="priorityInput">
+                <option value="normal">Normal</option>
+                <option value="high">Alta</option>
+                <option value="low">Baja</option>
+              </select>
+            </label>
+            <label>Presupuesto rubro
+              <input id="budgetInput" type="number" min="0" step="0.01" placeholder="Limite mensual">
+            </label>
+          </div>
+          <label>Tags
+            <input id="tagsInput" maxlength="120" placeholder="auto, casa, salud">
+          </label>
+        </details>
+        <label>Notas
+          <textarea id="notesInput" rows="3" placeholder="Vencimiento, banco, detalle"></textarea>
+        </label>
+        <div class="form-actions">
+          <button class="secondary" id="cancelEditBtn" type="button">Cancelar</button>
+          <button type="submit">Guardar</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <template id="emptyStateTemplate">
     <div class="empty-state">
