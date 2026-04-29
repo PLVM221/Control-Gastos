@@ -23,3 +23,5 @@
 | 14:50 | feat(ui): mover carga rapida a modal con boton de acceso |
 | 14:55 | feat(ui): agregar microanimaciones, loading sync y toasts |
 | 14:55 | test: node --check app.js OK |
+| 16:13 | feat(ui): agregar acceso directo para cargar ingresos |
+| 16:13 | test: node --check app.js OK |

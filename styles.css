@@ -273,6 +273,23 @@ textarea:focus {
   box-shadow: 0 14px 30px rgba(54, 98, 227, .18);
 }
 
+.secondary-action {
+  min-height: 44px;
+  border-radius: 8px;
+  padding: 0 16px;
+  background: var(--surface);
+  color: var(--accent-2);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-soft);
+  font-weight: 850;
+  transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.secondary-action:hover {
+  transform: translateY(-1px);
+  background: var(--soft-blue);
+}
+
 .icon-button {
   width: 44px;
   height: 44px;

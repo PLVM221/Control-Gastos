@@ -96,6 +96,7 @@ const els = {
   clearBtn: document.querySelector("#clearBtn"),
   emptyTemplate: document.querySelector("#emptyStateTemplate"),
   openEntryBtn: document.querySelector("#openEntryBtn"),
+  openIncomeBtn: document.querySelector("#openIncomeBtn"),
   closeEntryBtn: document.querySelector("#closeEntryBtn"),
   entryModal: document.querySelector("#entryModal"),
   savingsRate: document.querySelector("#savingsRate"),
@@ -169,6 +170,14 @@ function bindEvents() {
 
   els.openEntryBtn.addEventListener("click", () => {
     resetForm();
+    applyPreset("fixed");
+    els.formMode.textContent = "Nuevo gasto";
+    openEntryModal();
+  });
+  els.openIncomeBtn.addEventListener("click", () => {
+    resetForm();
+    applyPreset("income");
+    els.formMode.textContent = "Nuevo ingreso";
     openEntryModal();
   });
   els.closeEntryBtn.addEventListener("click", closeEntryModal);
@@ -952,6 +961,11 @@ function fromDbEntry(row) {
 function applyPreset(category) {
   els.categoryInput.value = category;
   els.kindInput.value = category === "income" ? "income" : "expense";
+  if (category === "income") {
+    els.paymentInput.value = "transfer";
+    els.frequencyInput.value = "monthly";
+    els.statusInput.value = "paid";
+  }
   if (category === "card") els.paymentInput.value = "card";
   if (category === "credit") els.paymentInput.value = "credit";
   if (category === "future") els.statusInput.value = "planned";
