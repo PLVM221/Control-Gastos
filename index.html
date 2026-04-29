@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Control Gastos</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">$</div>
+        <div>
+          <h1>Control Gastos</h1>
+          <p>Plan mensual completo</p>
+        </div>
+      </div>
+
+      <nav class="nav-tabs" aria-label="Vistas">
+        <button class="nav-tab active" data-view="dashboard" type="button">Panel</button>
+        <button class="nav-tab" data-view="items" type="button">Gastos</button>
+        <button class="nav-tab" data-view="cards" type="button">Tarjetas</button>
+        <button class="nav-tab" data-view="forecast" type="button">Futuro</button>
+      </nav>
+
+      <section class="month-picker" aria-label="Mes de trabajo">
+        <label for="monthInput">Mes</label>
+        <input id="monthInput" type="month">
+      </section>
+    </aside>
+
+    <main class="workspace">
+      <section class="toolbar">
+        <div>
+          <p class="eyebrow">Resumen mensual</p>
+          <h2 id="monthTitle">Mes actual</h2>
+        </div>
+        <div class="toolbar-actions">
+          <button class="icon-button" id="seedBtn" type="button" title="Cargar ejemplo" aria-label="Cargar ejemplo">+</button>
+          <button class="icon-button" id="exportBtn" type="button" title="Exportar JSON" aria-label="Exportar JSON">E</button>
+          <button class="icon-button danger" id="clearBtn" type="button" title="Borrar todo" aria-label="Borrar todo">X</button>
+        </div>
+      </section>
+
+      <section class="view active" id="dashboardView">
+        <div class="metrics-grid">
+          <article class="metric">
+            <span>Ingresos</span>
+            <strong id="incomeTotal">$0</strong>
+          </article>
+          <article class="metric">
+            <span>Gastos</span>
+            <strong id="expenseTotal">$0</strong>
+          </article>
+          <article class="metric">
+            <span>Disponible</span>
+            <strong id="balanceTotal">$0</strong>
+          </article>
+          <article class="metric">
+            <span>Comprometido</span>
+            <strong id="committedTotal">$0</strong>
+          </article>
+        </div>
+
+        <div class="content-grid">
+          <section class="panel">
+            <div class="panel-head">
+              <h3>Carga rapida</h3>
+              <span id="formMode">Nuevo</span>
+            </div>
+            <form id="entryForm" class="entry-form">
+              <input id="editingId" type="hidden">
+              <label>Concepto
+                <input id="nameInput" required maxlength="80" placeholder="Alquiler, supermercado, sueldo">
+              </label>
+              <div class="form-row">
+                <label>Tipo
+                  <select id="kindInput">
+                    <option value="expense">Gasto</option>
+                    <option value="income">Ingreso</option>
+                  </select>
+                </label>
+                <label>Categoria
+                  <select id="categoryInput">
+                    <option value="fixed">Fijo</option>
+                    <option value="additional">Adicional</option>
+                    <option value="casual">Casual</option>
+                    <option value="card">Tarjeta</option>
+                    <option value="credit">Credito</option>
+                    <option value="future">Futuro</option>
+                    <option value="income">Ingreso</option>
+                  </select>
+                </label>
+              </div>
+              <div class="form-row">
+                <label>Monto
+                  <input id="amountInput" required type="number" min="0" step="0.01" placeholder="0">
+                </label>
+                <label>Inicio
+                  <input id="startInput" required type="month">
+                </label>
+              </div>
+              <div class="form-row">
+                <label>Frecuencia
+                  <select id="frequencyInput">
+                    <option value="monthly">Mensual</option>
+                    <option value="once">Unica vez</option>
+                    <option value="weekly">Semanal</option>
+                    <option value="annual">Anual</option>
+                  </select>
+                </label>
+                <label>Duracion
+                  <input id="durationInput" type="number" min="0" step="1" placeholder="0 = sin fin">
+                </label>
+              </div>
+              <div class="form-row">
+                <label>Medio
+                  <select id="paymentInput">
+                    <option value="cash">Efectivo/debito</option>
+                    <option value="transfer">Transferencia</option>
+                    <option value="card">Tarjeta</option>
+                    <option value="credit">Credito</option>
+                  </select>
+                </label>
+                <label>Cuotas
+                  <input id="installmentsInput" type="number" min="1" step="1" placeholder="1">
+                </label>
+              </div>
+              <label>Notas
+                <textarea id="notesInput" rows="3" placeholder="Vencimiento, banco, detalle"></textarea>
+              </label>
+              <div class="form-actions">
+                <button class="secondary" id="cancelEditBtn" type="button">Cancelar</button>
+                <button type="submit">Guardar</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h3>Distribucion</h3>
+              <span id="itemCount">0 items</span>
+            </div>
+            <div class="bars" id="categoryBars"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="itemsView">
+        <section class="panel wide">
+          <div class="panel-head">
+            <h3>Todos los movimientos</h3>
+            <div class="filters">
+              <select id="filterCategory">
+                <option value="all">Todas</option>
+                <option value="fixed">Fijos</option>
+                <option value="additional">Adicionales</option>
+                <option value="casual">Casuales</option>
+                <option value="card">Tarjetas</option>
+                <option value="credit">Creditos</option>
+                <option value="future">Futuros</option>
+                <option value="income">Ingresos</option>
+              </select>
+              <input id="searchInput" placeholder="Buscar">
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Concepto</th>
+                  <th>Categoria</th>
+                  <th>Frecuencia</th>
+                  <th>Periodo</th>
+                  <th>Medio</th>
+                  <th>Monto mes</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="entriesTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" id="cardsView">
+        <div class="content-grid">
+          <section class="panel">
+            <div class="panel-head">
+              <h3>Tarjetas</h3>
+              <span id="cardTotal">$0</span>
+            </div>
+            <div class="list" id="cardList"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-head">
+              <h3>Creditos</h3>
+              <span id="creditTotal">$0</span>
+            </div>
+            <div class="list" id="creditList"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="forecastView">
+        <section class="panel wide">
+          <div class="panel-head">
+            <h3>Proximos 12 meses</h3>
+            <span>Ingresos - gastos</span>
+          </div>
+          <div class="forecast" id="forecastGrid"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <template id="emptyStateTemplate">
+    <div class="empty-state">
+      <strong>Sin datos</strong>
+      <p>Carga ingresos, fijos, tarjetas, creditos y gastos futuros.</p>
+    </div>
+  </template>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
