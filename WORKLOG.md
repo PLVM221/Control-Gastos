@@ -25,3 +25,15 @@
 | 14:55 | test: node --check app.js OK |
 | 16:13 | feat(ui): agregar acceso directo para cargar ingresos |
 | 16:13 | test: node --check app.js OK |
+| 16:52 | style(responsive): mejorar mobile con tabla tipo cards y modal adaptado |
+| 16:52 | test: node --check app.js OK |
+| 16:55 | fix(responsive): evitar overflow horizontal en vista gastos mobile |
+| 16:55 | test: node --check app.js OK |
+
+### 2026-04-30
+
+| Hora | Cambio |
+|------|--------|
+| 09:03 | feat(ui): agregar iconos animados, vista log de actividad y quitar export/ejemplo |
+| 09:03 | feat(audit): registrar cargas, modificaciones, eliminaciones y borrado total |
+| 09:03 | test: node --check app.js OK |

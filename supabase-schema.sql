@@ -54,3 +54,29 @@ on public.entries
 for delete
 to anon
 using (true);
+
+create table if not exists public.activity_logs (
+  id text primary key,
+  action text not null check (action in ('created', 'updated', 'deleted', 'cleared')),
+  entry_id text not null default '',
+  entry_name text not null default '',
+  amount numeric not null default 0,
+  kind text not null default '',
+  category text not null default '',
+  detail text not null default '',
+  created_at timestamptz not null default now()
+);
+
+alter table public.activity_logs enable row level security;
+
+create policy "Allow anon read activity logs"
+on public.activity_logs
+for select
+to anon
+using (true);
+
+create policy "Allow anon insert activity logs"
+on public.activity_logs
+for insert
+to anon
+with check (true);

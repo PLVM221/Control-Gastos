@@ -21,10 +21,11 @@
       </div>
 
       <nav class="nav-tabs" aria-label="Vistas">
-        <button class="nav-tab active" data-view="dashboard" type="button">Panel</button>
-        <button class="nav-tab" data-view="items" type="button">Gastos</button>
-        <button class="nav-tab" data-view="cards" type="button">Tarjetas</button>
-        <button class="nav-tab" data-view="forecast" type="button">Futuro</button>
+        <button class="nav-tab active" data-view="dashboard" type="button"><span class="nav-icon">◆</span>Panel</button>
+        <button class="nav-tab" data-view="items" type="button"><span class="nav-icon">▦</span>Gastos</button>
+        <button class="nav-tab" data-view="cards" type="button"><span class="nav-icon">▣</span>Tarjetas</button>
+        <button class="nav-tab" data-view="forecast" type="button"><span class="nav-icon">↗</span>Futuro</button>
+        <button class="nav-tab" data-view="activity" type="button"><span class="nav-icon">◷</span>Log</button>
       </nav>
 
       <section class="month-picker" aria-label="Mes de trabajo">
@@ -45,31 +46,29 @@
         <div class="toolbar-actions">
           <button class="primary-action" id="openEntryBtn" type="button">Nuevo gasto</button>
           <button class="secondary-action" id="openIncomeBtn" type="button">Nuevo ingreso</button>
-          <button class="icon-button" id="seedBtn" type="button" title="Cargar ejemplo" aria-label="Cargar ejemplo">+</button>
-          <button class="icon-button" id="exportBtn" type="button" title="Exportar JSON" aria-label="Exportar JSON">E</button>
-          <button class="icon-button danger" id="clearBtn" type="button" title="Borrar todo" aria-label="Borrar todo">X</button>
+          <button class="icon-button danger" id="clearBtn" type="button" title="Borrar todo" aria-label="Borrar todo">⌫</button>
         </div>
       </section>
 
       <section class="view active" id="dashboardView">
         <div class="metrics-grid">
           <article class="metric metric-income">
-            <span>Ingresos</span>
+            <span><i class="metric-icon">↥</i>Ingresos</span>
             <strong id="incomeTotal">$0</strong>
             <small id="incomeHint">0 movimientos</small>
           </article>
           <article class="metric metric-expense">
-            <span>Gastos</span>
+            <span><i class="metric-icon">↧</i>Gastos</span>
             <strong id="expenseTotal">$0</strong>
             <small id="expenseHint">0 movimientos</small>
           </article>
           <article class="metric metric-balance">
-            <span>Disponible</span>
+            <span><i class="metric-icon">●</i>Disponible</span>
             <strong id="balanceTotal">$0</strong>
             <small id="balanceHint">Balance mensual</small>
           </article>
           <article class="metric metric-committed">
-            <span>Comprometido</span>
+            <span><i class="metric-icon">◒</i>Comprometido</span>
             <strong id="committedTotal">$0</strong>
             <small id="committedHint">0% de ingresos</small>
           </article>
@@ -195,6 +194,16 @@
             <span>Ingresos - gastos</span>
           </div>
           <div class="forecast" id="forecastGrid"></div>
+        </section>
+      </section>
+
+      <section class="view" id="activityView">
+        <section class="panel wide">
+          <div class="panel-head">
+            <h3>Actividad</h3>
+            <span id="activityCount">0 eventos</span>
+          </div>
+          <div class="activity-list" id="activityList"></div>
         </section>
       </section>
     </main>

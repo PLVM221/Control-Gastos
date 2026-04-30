@@ -23,6 +23,12 @@
   box-sizing: border-box;
 }
 
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -68,6 +74,16 @@ body {
   }
   to {
     background-position: -120% 0;
+  }
+}
+
+@keyframes iconFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
   }
 }
 
@@ -118,6 +134,7 @@ button {
   box-shadow: 0 14px 34px rgba(15, 159, 122, .32);
   font-weight: 900;
   font-size: 24px;
+  animation: iconFloat 3.4s ease-in-out infinite;
 }
 
 .brand h1,
@@ -162,6 +179,28 @@ button {
   text-align: left;
   padding: 0 14px;
   font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.nav-icon,
+.metric-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .12);
+  color: currentColor;
+  font-style: normal;
+  transition: transform .18s ease;
+}
+
+.nav-tab:hover .nav-icon,
+.nav-tab.active .nav-icon,
+.metric:hover .metric-icon {
+  transform: translateY(-1px) rotate(-5deg);
 }
 
 .nav-tab.active,
@@ -206,6 +245,7 @@ textarea:focus {
   display: grid;
   align-content: start;
   gap: 20px;
+  min-width: 0;
 }
 
 .toolbar {
@@ -253,6 +293,7 @@ textarea:focus {
 
 .toolbar-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -316,6 +357,7 @@ textarea:focus {
 .view.active {
   display: grid;
   gap: 20px;
+  min-width: 0;
 }
 
 .metrics-grid {
@@ -332,6 +374,7 @@ textarea:focus {
   box-shadow: var(--shadow-soft);
   backdrop-filter: blur(12px);
   animation: fadeUp .34s ease both;
+  min-width: 0;
 }
 
 .metric {
@@ -387,6 +430,17 @@ textarea:focus {
 .metric small {
   font-size: 12px;
   font-weight: 650;
+}
+
+.metric span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.metric-icon {
+  background: var(--soft-blue);
+  color: var(--accent-2);
 }
 
 .insight-grid {
@@ -693,6 +747,9 @@ textarea {
 
 .table-wrap {
   overflow-x: auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 table {
@@ -847,6 +904,63 @@ tbody tr:hover {
   background: #fff8ed;
 }
 
+.activity-list {
+  display: grid;
+  gap: 10px;
+}
+
+.activity-item {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+  animation: fadeUp .24s ease both;
+}
+
+.activity-mark {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--soft-blue);
+  color: var(--accent-2);
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.activity-item.created .activity-mark {
+  background: var(--soft-green);
+  color: var(--accent);
+}
+
+.activity-item.deleted .activity-mark,
+.activity-item.cleared .activity-mark {
+  background: #fff8ed;
+  color: var(--danger);
+}
+
+.activity-item strong,
+.activity-item p {
+  margin: 0;
+}
+
+.activity-item p {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.activity-item time {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
 .empty-state {
   min-height: 170px;
   display: grid;
@@ -972,12 +1086,13 @@ tbody tr:hover {
 
   .nav-tabs {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
   .nav-tab {
     padding: 0 8px;
-    font-size: 13px;
+    font-size: 12px;
+    justify-content: center;
   }
 
   .month-picker {
@@ -992,7 +1107,21 @@ tbody tr:hover {
 
   .toolbar-actions,
   .form-actions {
-    justify-content: flex-start;
+    justify-content: stretch;
+  }
+
+  .toolbar-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 44px;
+    align-items: center;
+  }
+
+  .primary-action,
+  .secondary-action {
+    width: 100%;
+    padding: 0 10px;
+    min-width: 0;
+    font-size: 13px;
   }
 
   .metrics-grid,
@@ -1012,5 +1141,173 @@ tbody tr:hover {
 
   .donut-layout canvas {
     margin: 0 auto;
+  }
+
+  .modal-backdrop {
+    align-items: stretch;
+    padding: 10px;
+  }
+
+  .modal-panel {
+    width: 100%;
+    max-height: calc(100vh - 20px);
+    padding: 16px;
+  }
+
+  .table-wrap {
+    overflow: visible;
+  }
+
+  table,
+  thead,
+  tbody,
+  tr,
+  td {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  table {
+    table-layout: fixed;
+  }
+
+  thead {
+    display: none;
+  }
+
+  tbody {
+    display: grid;
+    gap: 12px;
+  }
+
+  tr {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
+    padding: 10px;
+  }
+
+  td {
+    display: grid;
+    grid-template-columns: minmax(76px, 96px) minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+    border-bottom: 0;
+    padding: 8px 4px;
+    overflow-wrap: anywhere;
+  }
+
+  td::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  td:first-child {
+    grid-template-columns: 1fr;
+    padding-top: 2px;
+  }
+
+  td:first-child::before {
+    display: none;
+  }
+
+  td:last-child {
+    grid-template-columns: 1fr;
+  }
+
+  td:last-child::before {
+    display: none;
+  }
+
+  .row-actions {
+    justify-content: stretch;
+    min-width: 0;
+  }
+
+  .row-actions button {
+    flex: 1;
+  }
+}
+
+@media (max-width: 460px) {
+  .workspace,
+  .sidebar {
+    padding: 12px;
+  }
+
+  .brand h1 {
+    font-size: 18px;
+  }
+
+  .brand p {
+    font-size: 13px;
+  }
+
+  .brand-mark {
+    width: 40px;
+    height: 40px;
+  }
+
+  .nav-tabs {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .toolbar-actions {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .icon-button {
+    width: 100%;
+  }
+
+  .nav-tabs {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .nav-tab {
+    justify-content: flex-start;
+  }
+
+  .metrics-grid {
+    gap: 10px;
+  }
+
+  .metric,
+  .panel,
+  .modal-panel {
+    padding: 14px;
+  }
+
+  .metric strong {
+    font-size: 23px;
+  }
+
+  .forecast-item strong,
+  .list-item strong,
+  .alert-item strong {
+    display: grid;
+  }
+
+  .toast {
+    right: 12px;
+    bottom: 12px;
+  }
+
+  .activity-item {
+    grid-template-columns: 36px minmax(0, 1fr);
+  }
+
+  .activity-mark {
+    width: 36px;
+    height: 36px;
+  }
+
+  .activity-item time {
+    grid-column: 2;
   }
 }

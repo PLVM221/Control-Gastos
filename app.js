@@ -1,4 +1,5 @@
 const STORAGE_KEY = "control-gastos:v1";
+const ACTIVITY_STORAGE_KEY = "control-gastos:activity:v1";
 const supabaseConfig = window.CONTROL_GASTOS_SUPABASE || {};
 const supabaseClient = createSupabaseClient();
 
@@ -38,6 +39,7 @@ const categoryColors = {
 
 const state = {
   entries: loadLocalEntries(),
+  activity: loadLocalActivity(),
   month: currentMonth(),
   view: "dashboard",
   filter: "all",
@@ -54,6 +56,7 @@ const els = {
     items: document.querySelector("#itemsView"),
     cards: document.querySelector("#cardsView"),
     forecast: document.querySelector("#forecastView"),
+    activity: document.querySelector("#activityView"),
   },
   form: document.querySelector("#entryForm"),
   editingId: document.querySelector("#editingId"),
@@ -91,8 +94,6 @@ const els = {
   cardTotal: document.querySelector("#cardTotal"),
   creditTotal: document.querySelector("#creditTotal"),
   forecastGrid: document.querySelector("#forecastGrid"),
-  seedBtn: document.querySelector("#seedBtn"),
-  exportBtn: document.querySelector("#exportBtn"),
   clearBtn: document.querySelector("#clearBtn"),
   emptyTemplate: document.querySelector("#emptyStateTemplate"),
   openEntryBtn: document.querySelector("#openEntryBtn"),
@@ -113,6 +114,8 @@ const els = {
   topExpenses: document.querySelector("#topExpenses"),
   topTotal: document.querySelector("#topTotal"),
   toast: document.querySelector("#toast"),
+  activityList: document.querySelector("#activityList"),
+  activityCount: document.querySelector("#activityCount"),
 };
 
 init();
@@ -188,8 +191,6 @@ function bindEvents() {
     if (event.key === "Escape") closeEntryModal();
   });
 
-  els.seedBtn.addEventListener("click", seedDemo);
-  els.exportBtn.addEventListener("click", exportJson);
   els.clearBtn.addEventListener("click", clearAll);
   window.addEventListener("resize", () => renderDashboard());
 }
@@ -222,6 +223,7 @@ function readForm() {
 async function saveEntry(entry) {
   if (!entry.name || !entry.start || entry.amount <= 0) return;
   const existingIndex = state.entries.findIndex((item) => item.id === entry.id);
+  const action = existingIndex >= 0 ? "updated" : "created";
 
   if (existingIndex >= 0) {
     state.entries[existingIndex] = { ...state.entries[existingIndex], ...entry };
@@ -230,6 +232,7 @@ async function saveEntry(entry) {
   }
 
   await persist(entry);
+  await addActivity(action, entry);
   resetForm();
   closeEntryModal();
   render();
@@ -291,8 +294,10 @@ function editEntry(id) {
 }
 
 async function deleteEntry(id) {
+  const entry = state.entries.find((item) => item.id === id);
   state.entries = state.entries.filter((item) => item.id !== id);
   await deleteRemote(id);
+  if (entry) await addActivity("deleted", entry);
   persistLocal();
   render();
 }
@@ -303,6 +308,7 @@ function render() {
   renderEntriesTable();
   renderCards();
   renderForecast();
+  renderActivity();
 }
 
 function renderShell() {
@@ -394,18 +400,18 @@ function renderEntriesTable() {
   rows.forEach((item) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>
+      <td data-label="Concepto">
         <strong>${escapeHtml(item.name)}</strong>
         <div class="muted">${escapeHtml(item.notes || "")}</div>
       </td>
-      <td><span class="pill">${categoryLabels[item.category]}</span></td>
-      <td>${frequencyLabels[item.frequency]}</td>
-      <td>${periodLabel(item)}</td>
-      <td>${paymentLabel(item)}</td>
-      <td><span class="status-pill ${entryStatus(item)}">${statusLabels[entryStatus(item)]}</span></td>
-      <td>${dueLabel(item)}</td>
-      <td>${money(monthlyAmount(item, state.month))}</td>
-      <td>
+      <td data-label="Categoria"><span class="pill">${categoryLabels[item.category]}</span></td>
+      <td data-label="Frecuencia">${frequencyLabels[item.frequency]}</td>
+      <td data-label="Periodo">${periodLabel(item)}</td>
+      <td data-label="Medio">${paymentLabel(item)}</td>
+      <td data-label="Estado"><span class="status-pill ${entryStatus(item)}">${statusLabels[entryStatus(item)]}</span></td>
+      <td data-label="Vence">${dueLabel(item)}</td>
+      <td data-label="Monto mes">${money(monthlyAmount(item, state.month))}</td>
+      <td data-label="Acciones">
         <div class="row-actions">
           <button type="button" data-edit="${item.id}" title="Editar" aria-label="Editar">E</button>
           <button class="delete" type="button" data-delete="${item.id}" title="Borrar" aria-label="Borrar">X</button>
@@ -465,6 +471,32 @@ function renderForecast() {
       <div class="muted">Gastos ${money(expenses)}</div>
     `;
     els.forecastGrid.append(div);
+  });
+}
+
+function renderActivity() {
+  if (!els.activityList) return;
+  const rows = [...state.activity].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 80);
+  els.activityList.innerHTML = "";
+  els.activityCount.textContent = `${rows.length} eventos`;
+
+  if (!rows.length) {
+    els.activityList.append(emptyState());
+    return;
+  }
+
+  rows.forEach((event) => {
+    const item = document.createElement("article");
+    item.className = `activity-item ${event.action}`;
+    item.innerHTML = `
+      <div class="activity-mark">${activityIcon(event.action)}</div>
+      <div>
+        <strong>${activityTitle(event)}</strong>
+        <p>${escapeHtml(event.detail)}</p>
+      </div>
+      <time>${formatDateTime(event.createdAt)}</time>
+    `;
+    els.activityList.append(item);
   });
 }
 
@@ -753,21 +785,16 @@ function loadLocalEntries() {
   }
 }
 
-async function seedDemo() {
-  if (state.entries.length && !confirm("Agregar datos ejemplo sobre datos actuales?")) return;
-  const month = state.month;
-  const demoEntries = [
-    makeEntry("Sueldo", "income", "income", 1250000, month, "monthly", 0, "transfer"),
-    makeEntry("Alquiler", "expense", "fixed", 360000, month, "monthly", 0, "transfer"),
-    makeEntry("Supermercado", "expense", "additional", 220000, month, "monthly", 0, "card"),
-    makeEntry("Salida", "expense", "casual", 45000, month, "once", 0, "card"),
-    makeEntry("Visa", "expense", "card", 180000, month, "monthly", 6, "card", 6),
-    makeEntry("Prestamo banco", "expense", "credit", 145000, month, "monthly", 18, "credit", 18),
-    makeEntry("Seguro auto", "expense", "future", 98000, nextMonths(month, 2)[1], "monthly", 12, "transfer"),
-  ];
-  state.entries.push(...demoEntries);
-  await persistMany(demoEntries);
-  render();
+function persistActivityLocal() {
+  localStorage.setItem(ACTIVITY_STORAGE_KEY, JSON.stringify(state.activity));
+}
+
+function loadLocalActivity() {
+  try {
+    return JSON.parse(localStorage.getItem(ACTIVITY_STORAGE_KEY)) || [];
+  } catch {
+    return [];
+  }
 }
 
 function makeEntry(name, kind, category, amount, start, frequency, duration, payment, installments = 1) {
@@ -794,22 +821,18 @@ function makeEntry(name, kind, category, amount, start, frequency, duration, pay
   };
 }
 
-function exportJson() {
-  const data = JSON.stringify({ exportedAt: new Date().toISOString(), entries: state.entries }, null, 2);
-  const blob = new Blob([data], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `control-gastos-${state.month}.json`;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
 async function clearAll() {
   if (!state.entries.length) return;
-  if (!confirm("Borrar todos los datos locales?")) return;
+  if (!confirm("Seguro que queres borrar todos los movimientos? Esta accion no se puede deshacer.")) return;
+  const typed = prompt('Escribi "BORRAR" para confirmar.');
+  if (typed !== "BORRAR") {
+    showToast("Borrado cancelado", "warning");
+    return;
+  }
+  const deletedCount = state.entries.length;
   state.entries = [];
   await clearRemote();
+  await addActivity("cleared", { name: "Todos los movimientos", amount: deletedCount, category: "all", kind: "expense" });
   persistLocal();
   resetForm();
   render();
@@ -850,6 +873,17 @@ async function syncFromSupabase() {
   }
 
   state.entries = data.map(fromDbEntry);
+  const { data: activityData, error: activityError } = await supabaseClient
+    .from(activityTableName())
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (!activityError && activityData) {
+    state.activity = activityData.map(fromDbActivity);
+    persistActivityLocal();
+  }
+
   persistLocal();
   render();
   document.body.classList.remove("is-syncing");
@@ -910,6 +944,10 @@ function tableName() {
   return supabaseConfig.table || "entries";
 }
 
+function activityTableName() {
+  return supabaseConfig.activityTable || "activity_logs";
+}
+
 function toDbEntry(entry) {
   return {
     id: entry.id,
@@ -954,6 +992,98 @@ function fromDbEntry(row) {
     budget: Number(row.budget || 0),
     tags: row.tags || [],
     notes: row.notes || "",
+    createdAt: row.created_at,
+  };
+}
+
+async function addActivity(action, entry) {
+  const event = {
+    id: newId(),
+    action,
+    entryId: entry.id || "",
+    entryName: entry.name || "Movimiento",
+    amount: Number(entry.amount || 0),
+    kind: entry.kind || "expense",
+    category: entry.category || "uncategorized",
+    detail: activityDetail(action, entry),
+    createdAt: new Date().toISOString(),
+  };
+
+  state.activity.unshift(event);
+  state.activity = state.activity.slice(0, 120);
+  persistActivityLocal();
+  renderActivity();
+
+  if (!supabaseClient) return;
+  const { error } = await supabaseClient.from(activityTableName()).insert(toDbActivity(event));
+  if (error) console.error("Supabase activity log failed:", error.message);
+}
+
+function activityDetail(action, entry) {
+  const amount = entry.amount ? money(entry.amount) : "";
+  const category = categoryLabels[entry.category] || entry.category || "Sin categoria";
+  const base = `${entry.name || "Movimiento"} ${amount} - ${category}`;
+  if (action === "created") return `Carga creada: ${base}`;
+  if (action === "updated") return `Movimiento modificado: ${base}`;
+  if (action === "deleted") return `Movimiento eliminado: ${base}`;
+  if (action === "cleared") return `Borrado total ejecutado. Movimientos eliminados: ${entry.amount || 0}`;
+  return base;
+}
+
+function activityTitle(event) {
+  const labels = {
+    created: "Carga",
+    updated: "Modificacion",
+    deleted: "Eliminacion",
+    cleared: "Borrado total",
+  };
+  return labels[event.action] || "Actividad";
+}
+
+function activityIcon(action) {
+  const icons = {
+    created: "+",
+    updated: "↻",
+    deleted: "−",
+    cleared: "⌫",
+  };
+  return icons[action] || "•";
+}
+
+function formatDateTime(value) {
+  return new Intl.DateTimeFormat("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+function toDbActivity(event) {
+  return {
+    id: event.id,
+    action: event.action,
+    entry_id: event.entryId,
+    entry_name: event.entryName,
+    amount: event.amount,
+    kind: event.kind,
+    category: event.category,
+    detail: event.detail,
+    created_at: event.createdAt,
+  };
+}
+
+function fromDbActivity(row) {
+  return {
+    id: row.id,
+    action: row.action,
+    entryId: row.entry_id || "",
+    entryName: row.entry_name || "",
+    amount: Number(row.amount || 0),
+    kind: row.kind || "",
+    category: row.category || "",
+    detail: row.detail || "",
     createdAt: row.created_at,
   };
 }
