@@ -1,5 +1,6 @@
 const STORAGE_KEY = "control-gastos:v1";
 const ACTIVITY_STORAGE_KEY = "control-gastos:activity:v1";
+const SESSION_STORAGE_KEY = "control-gastos:session:v1";
 const supabaseConfig = window.CONTROL_GASTOS_SUPABASE || {};
 const supabaseClient = createSupabaseClient();
 
@@ -37,12 +38,15 @@ const categoryColors = {
   income: "#2fbf9b",
 };
 
-const AUTH_EMAIL_DOMAIN = "control-gastos.local";
+const appUsers = {
+  admin: "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5",
+  martin: "53efce997017bfa1689372396b029257319dd8e42ef0c0781a255df123bd035a",
+};
 
 const state = {
   entries: loadLocalEntries(),
   activity: loadLocalActivity(),
-  currentUser: null,
+  currentUser: loadSession(),
   month: currentMonth(),
   view: "dashboard",
   filter: "all",
@@ -887,7 +891,7 @@ function createSupabaseClient() {
 
 async function syncFromSupabase() {
   if (!supabaseClient) return;
-  if (!state.currentUser) {
+  if (!state.currentUser?.name) {
     state.entries = [];
     state.activity = [];
     persistLocal();
@@ -899,7 +903,7 @@ async function syncFromSupabase() {
   const { data, error } = await supabaseClient
     .from(tableName())
     .select("*")
-    .eq("user_id", state.currentUser.id)
+    .eq("user_name", state.currentUser.name)
     .order("created_at", { ascending: true });
 
   if (error) {
@@ -913,7 +917,7 @@ async function syncFromSupabase() {
   const { data: activityData, error: activityError } = await supabaseClient
     .from(activityTableName())
     .select("*")
-    .eq("user_id", state.currentUser.id)
+    .eq("user_name", state.currentUser.name)
     .order("created_at", { ascending: false })
     .limit(100);
 
@@ -963,7 +967,7 @@ async function deleteRemote(id) {
     showToast("Movimiento borrado", "success");
     return;
   }
-  const { error } = await supabaseClient.from(tableName()).delete().eq("id", id).eq("user_id", state.currentUser.id);
+  const { error } = await supabaseClient.from(tableName()).delete().eq("id", id).eq("user_name", state.currentUser.name);
   if (error) console.error("Supabase delete failed:", error.message);
   showToast(error ? "Borrado local, Supabase fallo" : "Movimiento borrado", error ? "warning" : "success");
 }
@@ -973,7 +977,7 @@ async function clearRemote() {
     showToast("Datos borrados", "success");
     return;
   }
-  const { error } = await supabaseClient.from(tableName()).delete().eq("user_id", state.currentUser.id);
+  const { error } = await supabaseClient.from(tableName()).delete().eq("user_name", state.currentUser.name);
   if (error) console.error("Supabase clear failed:", error.message);
   showToast(error ? "Borrado local, Supabase fallo" : "Datos borrados", error ? "warning" : "success");
 }
@@ -989,7 +993,7 @@ function activityTableName() {
 function toDbEntry(entry) {
   return {
     id: entry.id,
-    user_id: state.currentUser?.id || null,
+    user_name: state.currentUser?.name || "",
     name: entry.name,
     kind: entry.kind,
     category: entry.category,
@@ -1104,7 +1108,7 @@ function formatDateTime(value) {
 function toDbActivity(event) {
   return {
     id: event.id,
-    user_id: state.currentUser?.id || null,
+    user_name: state.currentUser?.name || "",
     action: event.action,
     entry_id: event.entryId,
     entry_name: event.entryName,
@@ -1133,34 +1137,14 @@ function fromDbActivity(row) {
 }
 
 function currentActorName() {
-  const email = state.currentUser?.email || "";
-  const username = email.split("@")[0];
-  return state.currentUser?.user_metadata?.name || capitalize(username) || "Usuario";
+  return state.currentUser?.name || "Usuario";
 }
 
 async function initAuth() {
-  if (!supabaseClient) {
-    renderAuth();
-    return;
-  }
-
-  const { data } = await supabaseClient.auth.getSession();
-  state.currentUser = data.session?.user || null;
   renderAuth();
-
-  supabaseClient.auth.onAuthStateChange(async (_event, session) => {
-    state.currentUser = session?.user || null;
-    renderAuth();
-    await syncFromSupabase();
-  });
 }
 
 async function signInWithPassword() {
-  if (!supabaseClient) {
-    showToast("Supabase no configurado", "warning");
-    return;
-  }
-
   const username = normalizeUsername(els.loginUserInput.value);
   const password = els.loginPasswordInput.value;
   if (!username || !password) {
@@ -1168,25 +1152,23 @@ async function signInWithPassword() {
     return;
   }
 
-  const { error } = await supabaseClient.auth.signInWithPassword({
-    email: usernameToEmail(username),
-    password,
-  });
-
-  if (error) {
-    console.error("Supabase auth failed:", error.message);
+  const passwordHash = await sha256(password);
+  if (appUsers[username] !== passwordHash) {
     showToast("Usuario o contrasena incorrectos", "warning");
     els.loginStatus.textContent = "No se pudo ingresar. Revisa usuario y contrasena.";
     return;
   }
 
+  state.currentUser = { name: username };
+  saveSession(state.currentUser);
   els.loginPasswordInput.value = "";
+  renderAuth();
+  await syncFromSupabase();
   showToast("Ingreso correcto", "success");
 }
 
 async function signOut() {
-  if (!supabaseClient) return;
-  await supabaseClient.auth.signOut();
+  clearSession();
   state.currentUser = null;
   state.entries = [];
   state.activity = [];
@@ -1194,20 +1176,20 @@ async function signOut() {
   persistActivityLocal();
   renderAuth();
   render();
-  showToast("Sesión cerrada", "success");
+  showToast("Sesion cerrada", "success");
 }
 
 function renderAuth() {
-  const email = state.currentUser?.email || "";
-  document.body.classList.toggle("auth-required", !email);
-  els.appShell.setAttribute("aria-hidden", email ? "false" : "true");
-  els.loginScreen.setAttribute("aria-hidden", email ? "true" : "false");
-  els.logoutBtn.classList.toggle("hidden", !email);
-  els.logoutBtn.textContent = email ? `Salir (${currentActorName()})` : "Salir";
+  const loggedIn = Boolean(state.currentUser?.name);
+  document.body.classList.toggle("auth-required", !loggedIn);
+  els.appShell.setAttribute("aria-hidden", loggedIn ? "false" : "true");
+  els.loginScreen.setAttribute("aria-hidden", loggedIn ? "true" : "false");
+  els.logoutBtn.classList.toggle("hidden", !loggedIn);
+  els.logoutBtn.textContent = loggedIn ? `Salir (${currentActorName()})` : "Salir";
 }
 
 function ensureCanWrite() {
-  if (!supabaseClient || state.currentUser) return true;
+  if (state.currentUser?.name) return true;
   showToast("Ingresa con tu usuario primero", "warning");
   return false;
 }
@@ -1221,8 +1203,26 @@ function normalizeUsername(value) {
     .replace(/[^a-z0-9._-]/g, "");
 }
 
-function usernameToEmail(username) {
-  return `${username}@${AUTH_EMAIL_DOMAIN}`;
+async function sha256(value) {
+  const bytes = new TextEncoder().encode(value);
+  const hash = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(hash)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function saveSession(user) {
+  localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(user));
+}
+
+function loadSession() {
+  try {
+    return JSON.parse(localStorage.getItem(SESSION_STORAGE_KEY));
+  } catch {
+    return null;
+  }
+}
+
+function clearSession() {
+  localStorage.removeItem(SESSION_STORAGE_KEY);
 }
 
 function capitalize(value) {

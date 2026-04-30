@@ -55,4 +55,7 @@
 | 15:48 | test: node --check app.js OK |
 | 15:54 | feat(auth): cambiar login a usuario manual sin Google ni correos visibles |
 | 15:54 | test: node --check app.js OK |
+| 16:24 | fix(auth): reemplazar Supabase Auth por login interno persistente por usuario |
+| 16:24 | fix(db): usar user_name para separar datos y logs por usuario |
+| 16:24 | test: node --check app.js OK |
 | 16:00 | docs(auth): dejar referencias de usuario como admin/Martin |
