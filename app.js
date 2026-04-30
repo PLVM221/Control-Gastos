@@ -40,6 +40,7 @@ const categoryColors = {
 const state = {
   entries: loadLocalEntries(),
   activity: loadLocalActivity(),
+  currentUser: null,
   month: currentMonth(),
   view: "dashboard",
   filter: "all",
@@ -116,6 +117,16 @@ const els = {
   toast: document.querySelector("#toast"),
   activityList: document.querySelector("#activityList"),
   activityCount: document.querySelector("#activityCount"),
+  appShell: document.querySelector("#appShell"),
+  loginScreen: document.querySelector("#loginScreen"),
+  loginEmailForm: document.querySelector("#loginEmailForm"),
+  loginEmailInput: document.querySelector("#loginEmailInput"),
+  loginStatus: document.querySelector("#loginStatus"),
+  googleLoginBtn: document.querySelector("#googleLoginBtn"),
+  logoutBtn: document.querySelector("#logoutBtn"),
+  rosarioTime: document.querySelector("#rosarioTime"),
+  rosarioWeather: document.querySelector("#rosarioWeather"),
+  weatherLabel: document.querySelector("#weatherLabel"),
 };
 
 init();
@@ -124,8 +135,11 @@ async function init() {
   els.monthInput.value = state.month;
   els.startInput.value = state.month;
   bindEvents();
+  await initAuth();
+  initContextInfo();
   render();
   await syncFromSupabase();
+  refreshIcons();
 }
 
 function bindEvents() {
@@ -146,6 +160,14 @@ function bindEvents() {
     event.preventDefault();
     saveEntry(readForm());
   });
+
+  els.loginEmailForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await signInWithEmail();
+  });
+
+  els.googleLoginBtn.addEventListener("click", signInWithGoogle);
+  els.logoutBtn.addEventListener("click", signOut);
 
   els.cancelEditBtn.addEventListener("click", () => {
     resetForm();
@@ -221,6 +243,7 @@ function readForm() {
 }
 
 async function saveEntry(entry) {
+  if (!ensureCanWrite()) return;
   if (!entry.name || !entry.start || entry.amount <= 0) return;
   const existingIndex = state.entries.findIndex((item) => item.id === entry.id);
   const action = existingIndex >= 0 ? "updated" : "created";
@@ -294,6 +317,7 @@ function editEntry(id) {
 }
 
 async function deleteEntry(id) {
+  if (!ensureCanWrite()) return;
   const entry = state.entries.find((item) => item.id === id);
   state.entries = state.entries.filter((item) => item.id !== id);
   await deleteRemote(id);
@@ -309,6 +333,7 @@ function render() {
   renderCards();
   renderForecast();
   renderActivity();
+  refreshIcons();
 }
 
 function renderShell() {
@@ -610,11 +635,11 @@ function renderDonut(rows) {
   });
 
   ctx.fillStyle = "#263445";
-  ctx.font = "800 18px Inter, sans-serif";
+  ctx.font = "800 18px Manrope, sans-serif";
   ctx.textAlign = "center";
   ctx.fillText(`${rows.length}`, center, center - 2);
   ctx.fillStyle = "#647084";
-  ctx.font = "700 12px Inter, sans-serif";
+  ctx.font = "700 12px Manrope, sans-serif";
   ctx.fillText("rubros", center, center + 16);
 }
 
@@ -656,7 +681,7 @@ function renderTrendChart() {
   drawLine(ctx, points.map((point) => Math.max(point.balance, 0)), max, cssWidth, cssHeight, pad, "#6d7df2");
 
   ctx.fillStyle = "#647084";
-  ctx.font = "700 11px Inter, sans-serif";
+  ctx.font = "700 11px Manrope, sans-serif";
   ctx.textAlign = "left";
   ctx.fillText("Ingresos", pad, 14);
   ctx.fillStyle = "#2fbf9b";
@@ -761,7 +786,8 @@ function money(value) {
 
 function formatMonth(value) {
   const [year, month] = value.split("-").map(Number);
-  return new Intl.DateTimeFormat("es-AR", { month: "long", year: "numeric" }).format(new Date(year, month - 1, 1));
+  const formatted = new Intl.DateTimeFormat("es-AR", { month: "long", year: "numeric" }).format(new Date(year, month - 1, 1));
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 }
 
 function currentMonth() {
@@ -822,6 +848,7 @@ function makeEntry(name, kind, category, amount, start, frequency, duration, pay
 }
 
 async function clearAll() {
+  if (!ensureCanWrite()) return;
   if (!state.entries.length) return;
   if (!confirm("Seguro que queres borrar todos los movimientos? Esta accion no se puede deshacer.")) return;
   const typed = prompt('Escribi "BORRAR" para confirmar.');
@@ -859,10 +886,19 @@ function createSupabaseClient() {
 
 async function syncFromSupabase() {
   if (!supabaseClient) return;
+  if (!state.currentUser) {
+    state.entries = [];
+    state.activity = [];
+    persistLocal();
+    persistActivityLocal();
+    render();
+    return;
+  }
   document.body.classList.add("is-syncing");
   const { data, error } = await supabaseClient
     .from(tableName())
     .select("*")
+    .eq("user_id", state.currentUser.id)
     .order("created_at", { ascending: true });
 
   if (error) {
@@ -876,6 +912,7 @@ async function syncFromSupabase() {
   const { data: activityData, error: activityError } = await supabaseClient
     .from(activityTableName())
     .select("*")
+    .eq("user_id", state.currentUser.id)
     .order("created_at", { ascending: false })
     .limit(100);
 
@@ -925,7 +962,7 @@ async function deleteRemote(id) {
     showToast("Movimiento borrado", "success");
     return;
   }
-  const { error } = await supabaseClient.from(tableName()).delete().eq("id", id);
+  const { error } = await supabaseClient.from(tableName()).delete().eq("id", id).eq("user_id", state.currentUser.id);
   if (error) console.error("Supabase delete failed:", error.message);
   showToast(error ? "Borrado local, Supabase fallo" : "Movimiento borrado", error ? "warning" : "success");
 }
@@ -935,7 +972,7 @@ async function clearRemote() {
     showToast("Datos borrados", "success");
     return;
   }
-  const { error } = await supabaseClient.from(tableName()).delete().not("id", "is", null);
+  const { error } = await supabaseClient.from(tableName()).delete().eq("user_id", state.currentUser.id);
   if (error) console.error("Supabase clear failed:", error.message);
   showToast(error ? "Borrado local, Supabase fallo" : "Datos borrados", error ? "warning" : "success");
 }
@@ -951,6 +988,7 @@ function activityTableName() {
 function toDbEntry(entry) {
   return {
     id: entry.id,
+    user_id: state.currentUser?.id || null,
     name: entry.name,
     kind: entry.kind,
     category: entry.category,
@@ -1063,6 +1101,7 @@ function formatDateTime(value) {
 function toDbActivity(event) {
   return {
     id: event.id,
+    user_id: state.currentUser?.id || null,
     action: event.action,
     entry_id: event.entryId,
     entry_name: event.entryName,
@@ -1086,6 +1125,145 @@ function fromDbActivity(row) {
     detail: row.detail || "",
     createdAt: row.created_at,
   };
+}
+
+async function initAuth() {
+  if (!supabaseClient) {
+    renderAuth();
+    return;
+  }
+
+  const { data } = await supabaseClient.auth.getSession();
+  state.currentUser = data.session?.user || null;
+  renderAuth();
+
+  supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+    state.currentUser = session?.user || null;
+    renderAuth();
+    await syncFromSupabase();
+  });
+}
+
+async function signInWithEmail() {
+  if (!supabaseClient) {
+    showToast("Supabase no configurado", "warning");
+    return;
+  }
+
+  const email = els.loginEmailInput.value.trim();
+  if (!email) {
+    showToast("Ingresá tu mail", "warning");
+    return;
+  }
+
+  const { error } = await supabaseClient.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: window.location.href.split("#")[0],
+    },
+  });
+
+  if (error) {
+    console.error("Supabase auth failed:", error.message);
+    showToast("No se pudo enviar login", "warning");
+    els.loginStatus.textContent = "No se pudo enviar el link. Revisá el mail.";
+    return;
+  }
+
+  els.loginStatus.textContent = "Te mandamos un link. Abrilo para ingresar.";
+  showToast("Revisá tu mail para entrar", "success");
+}
+
+async function signInWithGoogle() {
+  if (!supabaseClient) {
+    showToast("Supabase no configurado", "warning");
+    return;
+  }
+
+  const { error } = await supabaseClient.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: window.location.href.split("#")[0],
+    },
+  });
+
+  if (error) {
+    console.error("Google auth failed:", error.message);
+    showToast("No se pudo iniciar Google", "warning");
+  }
+}
+
+async function signOut() {
+  if (!supabaseClient) return;
+  await supabaseClient.auth.signOut();
+  state.currentUser = null;
+  state.entries = [];
+  state.activity = [];
+  persistLocal();
+  persistActivityLocal();
+  renderAuth();
+  render();
+  showToast("Sesión cerrada", "success");
+}
+
+function renderAuth() {
+  const email = state.currentUser?.email || "";
+  document.body.classList.toggle("auth-required", !email);
+  els.appShell.setAttribute("aria-hidden", email ? "false" : "true");
+  els.loginScreen.setAttribute("aria-hidden", email ? "true" : "false");
+  els.logoutBtn.classList.toggle("hidden", !email);
+  els.logoutBtn.textContent = email ? `Salir (${email})` : "Salir";
+}
+
+function ensureCanWrite() {
+  if (!supabaseClient || state.currentUser) return true;
+  showToast("Ingresá con tu mail primero", "warning");
+  return false;
+}
+
+function initContextInfo() {
+  updateRosarioTime();
+  fetchRosarioWeather();
+  setInterval(updateRosarioTime, 30000);
+  setInterval(fetchRosarioWeather, 30 * 60 * 1000);
+}
+
+function updateRosarioTime() {
+  if (!els.rosarioTime) return;
+  els.rosarioTime.textContent = new Intl.DateTimeFormat("es-AR", {
+    timeZone: "America/Argentina/Cordoba",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date());
+}
+
+async function fetchRosarioWeather() {
+  if (!els.rosarioWeather) return;
+  try {
+    const response = await fetch("https://api.open-meteo.com/v1/forecast?latitude=-32.9468&longitude=-60.6393&current=temperature_2m,weather_code&timezone=America%2FArgentina%2FCordoba");
+    const data = await response.json();
+    const temp = Math.round(data.current?.temperature_2m);
+    const code = data.current?.weather_code;
+    els.rosarioWeather.textContent = Number.isFinite(temp) ? `${temp}°` : "--°";
+    els.weatherLabel.textContent = weatherCodeLabel(code);
+  } catch (error) {
+    console.error("Weather fetch failed:", error);
+    els.weatherLabel.textContent = "Clima";
+    els.rosarioWeather.textContent = "--°";
+  }
+}
+
+function weatherCodeLabel(code) {
+  if ([0, 1].includes(code)) return "Despejado";
+  if ([2, 3].includes(code)) return "Nublado";
+  if ([45, 48].includes(code)) return "Niebla";
+  if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) return "Lluvia";
+  if ([95, 96, 99].includes(code)) return "Tormenta";
+  return "Clima";
+}
+
+function refreshIcons() {
+  if (window.lucide?.createIcons) window.lucide.createIcons();
 }
 
 function applyPreset(category) {

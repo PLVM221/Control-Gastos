@@ -6,11 +6,32 @@
   <title>Control Gastos</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-  <div class="app-shell">
+<body class="auth-required">
+  <section class="login-screen" id="loginScreen">
+    <div class="login-card">
+      <div class="brand login-brand">
+        <div class="brand-mark" aria-hidden="true">$</div>
+        <div>
+          <h1>Control Gastos</h1>
+          <p>Ingresa para ver tus datos</p>
+        </div>
+      </div>
+      <button class="google-action" id="googleLoginBtn" type="button">
+        <i data-lucide="chrome"></i>
+        Ingresar con Google
+      </button>
+      <form class="login-email" id="loginEmailForm">
+        <input id="loginEmailInput" type="email" placeholder="tu@email.com" autocomplete="email">
+        <button class="secondary-action" type="submit">Enviar link</button>
+      </form>
+      <p class="login-note" id="loginStatus">Tus movimientos quedan separados por usuario.</p>
+    </div>
+  </section>
+
+  <div class="app-shell" id="appShell">
     <aside class="sidebar">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true">$</div>
@@ -21,11 +42,11 @@
       </div>
 
       <nav class="nav-tabs" aria-label="Vistas">
-        <button class="nav-tab active" data-view="dashboard" type="button"><span class="nav-icon">◆</span>Panel</button>
-        <button class="nav-tab" data-view="items" type="button"><span class="nav-icon">▦</span>Gastos</button>
-        <button class="nav-tab" data-view="cards" type="button"><span class="nav-icon">▣</span>Tarjetas</button>
-        <button class="nav-tab" data-view="forecast" type="button"><span class="nav-icon">↗</span>Futuro</button>
-        <button class="nav-tab" data-view="activity" type="button"><span class="nav-icon">◷</span>Log</button>
+        <button class="nav-tab active" data-view="dashboard" type="button"><i data-lucide="layout-dashboard"></i>Panel</button>
+        <button class="nav-tab" data-view="items" type="button"><i data-lucide="receipt-text"></i>Gastos</button>
+        <button class="nav-tab" data-view="cards" type="button"><i data-lucide="credit-card"></i>Tarjetas</button>
+        <button class="nav-tab" data-view="forecast" type="button"><i data-lucide="trending-up"></i>Futuro</button>
+        <button class="nav-tab" data-view="activity" type="button"><i data-lucide="history"></i>Log</button>
       </nav>
 
       <section class="month-picker" aria-label="Mes de trabajo">
@@ -43,32 +64,43 @@
         <div class="status-strip">
           <strong id="savingsRate">0%</strong>
         </div>
+        <div class="context-strip">
+          <div>
+            <span>Rosario</span>
+            <strong id="rosarioTime">--:--</strong>
+          </div>
+          <div>
+            <span id="weatherLabel">Clima</span>
+            <strong id="rosarioWeather">--°</strong>
+          </div>
+        </div>
         <div class="toolbar-actions">
+          <button class="secondary-action" id="logoutBtn" type="button">Salir</button>
           <button class="primary-action" id="openEntryBtn" type="button">Nuevo gasto</button>
           <button class="secondary-action" id="openIncomeBtn" type="button">Nuevo ingreso</button>
-          <button class="icon-button danger" id="clearBtn" type="button" title="Borrar todo" aria-label="Borrar todo">⌫</button>
+          <button class="icon-button danger" id="clearBtn" type="button" title="Borrar todo" aria-label="Borrar todo"><i data-lucide="trash-2"></i></button>
         </div>
       </section>
 
       <section class="view active" id="dashboardView">
         <div class="metrics-grid">
           <article class="metric metric-income">
-            <span><i class="metric-icon">↥</i>Ingresos</span>
+            <span><i class="metric-icon" data-lucide="arrow-down-circle"></i>Ingresos</span>
             <strong id="incomeTotal">$0</strong>
             <small id="incomeHint">0 movimientos</small>
           </article>
           <article class="metric metric-expense">
-            <span><i class="metric-icon">↧</i>Gastos</span>
+            <span><i class="metric-icon" data-lucide="arrow-up-circle"></i>Gastos</span>
             <strong id="expenseTotal">$0</strong>
             <small id="expenseHint">0 movimientos</small>
           </article>
           <article class="metric metric-balance">
-            <span><i class="metric-icon">●</i>Disponible</span>
+            <span><i class="metric-icon" data-lucide="wallet"></i>Disponible</span>
             <strong id="balanceTotal">$0</strong>
             <small id="balanceHint">Balance mensual</small>
           </article>
           <article class="metric metric-committed">
-            <span><i class="metric-icon">◒</i>Comprometido</span>
+            <span><i class="metric-icon" data-lucide="gauge"></i>Comprometido</span>
             <strong id="committedTotal">$0</strong>
             <small id="committedHint">0% de ingresos</small>
           </article>
@@ -343,6 +375,7 @@
   </template>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
   <script src="supabase-config.js"></script>
   <script src="app.js"></script>
 </body>

@@ -39,3 +39,14 @@
 | 09:03 | test: node --check app.js OK |
 | 10:37 | style(ui): actualizar paleta a menta, lavanda y ambar suave |
 | 10:37 | test: node --check app.js OK |
+| 12:18 | style(ui): cambiar tipografia a Manrope como alternativa libre a Flama |
+| 12:18 | test: node --check app.js OK |
+| 12:21 | style(ui): capitalizar nombre del mes en encabezados |
+| 12:21 | test: node --check app.js OK |
+| 12:24 | fix(db): hacer policies Supabase idempotentes con drop policy if exists |
+| 12:32 | feat(auth): agregar login por mail con Supabase Auth |
+| 12:32 | feat(db): agregar user_id y RLS por usuario en entries/activity_logs |
+| 12:32 | test: node --check app.js OK |
+| 15:33 | feat(auth): agregar pantalla inicial, login Google y magic link |
+| 15:33 | feat(ui): agregar hora y clima de Rosario por API |
+| 15:33 | test: node --check app.js OK |

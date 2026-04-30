@@ -1,5 +1,6 @@
 create table if not exists public.entries (
   id text primary key,
+  user_id uuid references auth.users(id) on delete cascade,
   name text not null,
   kind text not null check (kind in ('expense', 'income')),
   category text not null check (category in ('fixed', 'additional', 'casual', 'card', 'credit', 'future', 'income')),
@@ -27,36 +28,47 @@ alter table public.entries add column if not exists vendor text not null default
 alter table public.entries add column if not exists priority text not null default 'normal';
 alter table public.entries add column if not exists budget numeric not null default 0;
 alter table public.entries add column if not exists tags text[] not null default '{}';
+alter table public.entries add column if not exists user_id uuid references auth.users(id) on delete cascade;
 
 alter table public.entries enable row level security;
 
-create policy "Allow anon read entries"
+drop policy if exists "Allow anon read entries" on public.entries;
+drop policy if exists "Allow anon insert entries" on public.entries;
+drop policy if exists "Allow anon update entries" on public.entries;
+drop policy if exists "Allow anon delete entries" on public.entries;
+drop policy if exists "Users can read own entries" on public.entries;
+drop policy if exists "Users can insert own entries" on public.entries;
+drop policy if exists "Users can update own entries" on public.entries;
+drop policy if exists "Users can delete own entries" on public.entries;
+
+create policy "Users can read own entries"
 on public.entries
 for select
-to anon
-using (true);
+to authenticated
+using (auth.uid() = user_id);
 
-create policy "Allow anon insert entries"
+create policy "Users can insert own entries"
 on public.entries
 for insert
-to anon
-with check (true);
+to authenticated
+with check (auth.uid() = user_id);
 
-create policy "Allow anon update entries"
+create policy "Users can update own entries"
 on public.entries
 for update
-to anon
-using (true)
-with check (true);
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
 
-create policy "Allow anon delete entries"
+create policy "Users can delete own entries"
 on public.entries
 for delete
-to anon
-using (true);
+to authenticated
+using (auth.uid() = user_id);
 
 create table if not exists public.activity_logs (
   id text primary key,
+  user_id uuid references auth.users(id) on delete cascade,
   action text not null check (action in ('created', 'updated', 'deleted', 'cleared')),
   entry_id text not null default '',
   entry_name text not null default '',
@@ -67,16 +79,23 @@ create table if not exists public.activity_logs (
   created_at timestamptz not null default now()
 );
 
+alter table public.activity_logs add column if not exists user_id uuid references auth.users(id) on delete cascade;
+
 alter table public.activity_logs enable row level security;
 
-create policy "Allow anon read activity logs"
+drop policy if exists "Allow anon read activity logs" on public.activity_logs;
+drop policy if exists "Allow anon insert activity logs" on public.activity_logs;
+drop policy if exists "Users can read own activity logs" on public.activity_logs;
+drop policy if exists "Users can insert own activity logs" on public.activity_logs;
+
+create policy "Users can read own activity logs"
 on public.activity_logs
 for select
-to anon
-using (true);
+to authenticated
+using (auth.uid() = user_id);
 
-create policy "Allow anon insert activity logs"
+create policy "Users can insert own activity logs"
 on public.activity_logs
 for insert
-to anon
-with check (true);
+to authenticated
+with check (auth.uid() = user_id);
