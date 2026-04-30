@@ -72,6 +72,7 @@ create table if not exists public.activity_logs (
   action text not null check (action in ('created', 'updated', 'deleted', 'cleared')),
   entry_id text not null default '',
   entry_name text not null default '',
+  actor_name text not null default '',
   amount numeric not null default 0,
   kind text not null default '',
   category text not null default '',
@@ -80,6 +81,7 @@ create table if not exists public.activity_logs (
 );
 
 alter table public.activity_logs add column if not exists user_id uuid references auth.users(id) on delete cascade;
+alter table public.activity_logs add column if not exists actor_name text not null default '';
 
 alter table public.activity_logs enable row level security;
 

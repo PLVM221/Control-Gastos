@@ -50,3 +50,9 @@
 | 15:33 | feat(auth): agregar pantalla inicial, login Google y magic link |
 | 15:33 | feat(ui): agregar hora y clima de Rosario por API |
 | 15:33 | test: node --check app.js OK |
+| 15:48 | feat(auth): agregar login por usuario admin/Martin con contraseña |
+| 15:48 | feat(audit): guardar actor visible en log de actividad |
+| 15:48 | test: node --check app.js OK |
+| 15:54 | feat(auth): cambiar login a usuario manual sin Google ni correos visibles |
+| 15:54 | test: node --check app.js OK |
+| 16:00 | docs(auth): dejar referencias de usuario como admin/Martin |

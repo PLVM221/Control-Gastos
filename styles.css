@@ -85,21 +85,9 @@ body:not(.auth-required) .login-screen {
   margin-bottom: 8px;
 }
 
-.google-action {
-  min-height: 46px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  border-radius: 8px;
-  background: var(--ink);
-  color: #ffffff;
-  font-weight: 800;
-}
-
 .login-email {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: 130px minmax(0, 1fr) auto;
   gap: 8px;
 }
 
@@ -1183,7 +1171,6 @@ tbody tr:hover {
 
 .nav-tab svg,
 .icon-button svg,
-.google-action svg,
 .metric-icon svg {
   width: 18px;
   height: 18px;

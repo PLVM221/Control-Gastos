@@ -19,15 +19,12 @@
           <p>Ingresa para ver tus datos</p>
         </div>
       </div>
-      <button class="google-action" id="googleLoginBtn" type="button">
-        <i data-lucide="chrome"></i>
-        Ingresar con Google
-      </button>
-      <form class="login-email" id="loginEmailForm">
-        <input id="loginEmailInput" type="email" placeholder="tu@email.com" autocomplete="email">
-        <button class="secondary-action" type="submit">Enviar link</button>
+      <form class="login-email" id="loginForm">
+        <input id="loginUserInput" type="text" placeholder="Usuario" autocomplete="username">
+        <input id="loginPasswordInput" type="password" placeholder="Contraseña" autocomplete="current-password">
+        <button class="secondary-action" type="submit">Ingresar</button>
       </form>
-      <p class="login-note" id="loginStatus">Tus movimientos quedan separados por usuario.</p>
+      <p class="login-note" id="loginStatus">La sesion queda guardada en este navegador.</p>
     </div>
   </section>
 

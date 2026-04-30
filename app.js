@@ -37,6 +37,8 @@ const categoryColors = {
   income: "#2fbf9b",
 };
 
+const AUTH_EMAIL_DOMAIN = "control-gastos.local";
+
 const state = {
   entries: loadLocalEntries(),
   activity: loadLocalActivity(),
@@ -119,10 +121,10 @@ const els = {
   activityCount: document.querySelector("#activityCount"),
   appShell: document.querySelector("#appShell"),
   loginScreen: document.querySelector("#loginScreen"),
-  loginEmailForm: document.querySelector("#loginEmailForm"),
-  loginEmailInput: document.querySelector("#loginEmailInput"),
+  loginForm: document.querySelector("#loginForm"),
+  loginUserInput: document.querySelector("#loginUserInput"),
+  loginPasswordInput: document.querySelector("#loginPasswordInput"),
   loginStatus: document.querySelector("#loginStatus"),
-  googleLoginBtn: document.querySelector("#googleLoginBtn"),
   logoutBtn: document.querySelector("#logoutBtn"),
   rosarioTime: document.querySelector("#rosarioTime"),
   rosarioWeather: document.querySelector("#rosarioWeather"),
@@ -161,12 +163,11 @@ function bindEvents() {
     saveEntry(readForm());
   });
 
-  els.loginEmailForm.addEventListener("submit", async (event) => {
+  els.loginForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    await signInWithEmail();
+    await signInWithPassword();
   });
 
-  els.googleLoginBtn.addEventListener("click", signInWithGoogle);
   els.logoutBtn.addEventListener("click", signOut);
 
   els.cancelEditBtn.addEventListener("click", () => {
@@ -1040,6 +1041,7 @@ async function addActivity(action, entry) {
     action,
     entryId: entry.id || "",
     entryName: entry.name || "Movimiento",
+    actorName: currentActorName(),
     amount: Number(entry.amount || 0),
     kind: entry.kind || "expense",
     category: entry.category || "uncategorized",
@@ -1075,7 +1077,8 @@ function activityTitle(event) {
     deleted: "Eliminacion",
     cleared: "Borrado total",
   };
-  return labels[event.action] || "Actividad";
+  const action = labels[event.action] || "Actividad";
+  return `${action} - ${event.actorName || "Usuario"}`;
 }
 
 function activityIcon(action) {
@@ -1105,6 +1108,7 @@ function toDbActivity(event) {
     action: event.action,
     entry_id: event.entryId,
     entry_name: event.entryName,
+    actor_name: event.actorName || currentActorName(),
     amount: event.amount,
     kind: event.kind,
     category: event.category,
@@ -1119,12 +1123,19 @@ function fromDbActivity(row) {
     action: row.action,
     entryId: row.entry_id || "",
     entryName: row.entry_name || "",
+    actorName: row.actor_name || "",
     amount: Number(row.amount || 0),
     kind: row.kind || "",
     category: row.category || "",
     detail: row.detail || "",
     createdAt: row.created_at,
   };
+}
+
+function currentActorName() {
+  const email = state.currentUser?.email || "";
+  const username = email.split("@")[0];
+  return state.currentUser?.user_metadata?.name || capitalize(username) || "Usuario";
 }
 
 async function initAuth() {
@@ -1144,53 +1155,33 @@ async function initAuth() {
   });
 }
 
-async function signInWithEmail() {
+async function signInWithPassword() {
   if (!supabaseClient) {
     showToast("Supabase no configurado", "warning");
     return;
   }
 
-  const email = els.loginEmailInput.value.trim();
-  if (!email) {
-    showToast("Ingresá tu mail", "warning");
+  const username = normalizeUsername(els.loginUserInput.value);
+  const password = els.loginPasswordInput.value;
+  if (!username || !password) {
+    showToast("Ingresa usuario y contrasena", "warning");
     return;
   }
 
-  const { error } = await supabaseClient.auth.signInWithOtp({
-    email,
-    options: {
-      emailRedirectTo: window.location.href.split("#")[0],
-    },
+  const { error } = await supabaseClient.auth.signInWithPassword({
+    email: usernameToEmail(username),
+    password,
   });
 
   if (error) {
     console.error("Supabase auth failed:", error.message);
-    showToast("No se pudo enviar login", "warning");
-    els.loginStatus.textContent = "No se pudo enviar el link. Revisá el mail.";
+    showToast("Usuario o contrasena incorrectos", "warning");
+    els.loginStatus.textContent = "No se pudo ingresar. Revisa usuario y contrasena.";
     return;
   }
 
-  els.loginStatus.textContent = "Te mandamos un link. Abrilo para ingresar.";
-  showToast("Revisá tu mail para entrar", "success");
-}
-
-async function signInWithGoogle() {
-  if (!supabaseClient) {
-    showToast("Supabase no configurado", "warning");
-    return;
-  }
-
-  const { error } = await supabaseClient.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: window.location.href.split("#")[0],
-    },
-  });
-
-  if (error) {
-    console.error("Google auth failed:", error.message);
-    showToast("No se pudo iniciar Google", "warning");
-  }
+  els.loginPasswordInput.value = "";
+  showToast("Ingreso correcto", "success");
 }
 
 async function signOut() {
@@ -1212,13 +1203,31 @@ function renderAuth() {
   els.appShell.setAttribute("aria-hidden", email ? "false" : "true");
   els.loginScreen.setAttribute("aria-hidden", email ? "true" : "false");
   els.logoutBtn.classList.toggle("hidden", !email);
-  els.logoutBtn.textContent = email ? `Salir (${email})` : "Salir";
+  els.logoutBtn.textContent = email ? `Salir (${currentActorName()})` : "Salir";
 }
 
 function ensureCanWrite() {
   if (!supabaseClient || state.currentUser) return true;
-  showToast("Ingresá con tu mail primero", "warning");
+  showToast("Ingresa con tu usuario primero", "warning");
   return false;
+}
+
+function normalizeUsername(value) {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9._-]/g, "");
+}
+
+function usernameToEmail(username) {
+  return `${username}@${AUTH_EMAIL_DOMAIN}`;
+}
+
+function capitalize(value) {
+  if (!value) return "";
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 function initContextInfo() {
