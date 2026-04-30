@@ -28,13 +28,13 @@ const statusLabels = {
 };
 
 const categoryColors = {
-  fixed: "#3662e3",
-  additional: "#0f9f7a",
-  casual: "#f59f26",
-  card: "#b46a2a",
-  credit: "#7457d8",
-  future: "#16a7c4",
-  income: "#0f9f7a",
+  fixed: "#6d7df2",
+  additional: "#2fbf9b",
+  casual: "#efb85d",
+  card: "#c9873f",
+  credit: "#9b7bea",
+  future: "#4fb8d1",
+  income: "#2fbf9b",
 };
 
 const state = {
@@ -651,19 +651,19 @@ function renderTrendChart() {
 
   ctx.clearRect(0, 0, cssWidth, cssHeight);
   drawGrid(ctx, cssWidth, cssHeight, pad);
-  drawLine(ctx, points.map((point) => point.income), max, cssWidth, cssHeight, pad, "#0f9f7a");
-  drawLine(ctx, points.map((point) => point.expenses), max, cssWidth, cssHeight, pad, "#b46a2a");
-  drawLine(ctx, points.map((point) => Math.max(point.balance, 0)), max, cssWidth, cssHeight, pad, "#3662e3");
+  drawLine(ctx, points.map((point) => point.income), max, cssWidth, cssHeight, pad, "#2fbf9b");
+  drawLine(ctx, points.map((point) => point.expenses), max, cssWidth, cssHeight, pad, "#c9873f");
+  drawLine(ctx, points.map((point) => Math.max(point.balance, 0)), max, cssWidth, cssHeight, pad, "#6d7df2");
 
   ctx.fillStyle = "#647084";
   ctx.font = "700 11px Inter, sans-serif";
   ctx.textAlign = "left";
   ctx.fillText("Ingresos", pad, 14);
-  ctx.fillStyle = "#0f9f7a";
+  ctx.fillStyle = "#2fbf9b";
   ctx.fillRect(pad + 52, 6, 18, 4);
   ctx.fillStyle = "#647084";
   ctx.fillText("Gastos", pad + 86, 14);
-  ctx.fillStyle = "#b46a2a";
+  ctx.fillStyle = "#c9873f";
   ctx.fillRect(pad + 128, 6, 18, 4);
 }
 

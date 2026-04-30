@@ -1,22 +1,22 @@
 :root {
   color-scheme: light;
-  --bg: #eef2f6;
+  --bg: #f5f7fb;
   --surface: #ffffff;
-  --surface-2: #f7f9fc;
-  --ink: #263445;
-  --muted: #647084;
-  --line: #dbe3ee;
-  --accent: #0f9f7a;
-  --accent-2: #3662e3;
-  --accent-3: #f59f26;
-  --danger: #b46a2a;
-  --violet: #7457d8;
-  --cyan: #16a7c4;
-  --soft-green: #e9fbf5;
-  --soft-blue: #edf3ff;
-  --soft-red: #fff6ea;
-  --shadow: 0 18px 50px rgba(38, 52, 69, .10);
-  --shadow-soft: 0 10px 28px rgba(38, 52, 69, .07);
+  --surface-2: #f8f7ff;
+  --ink: #29354a;
+  --muted: #748198;
+  --line: #e2e7f0;
+  --accent: #2fbf9b;
+  --accent-2: #6d7df2;
+  --accent-3: #efb85d;
+  --danger: #c9873f;
+  --violet: #9b7bea;
+  --cyan: #4fb8d1;
+  --soft-green: #eafaf5;
+  --soft-blue: #eef2ff;
+  --soft-red: #fff7e8;
+  --shadow: 0 18px 50px rgba(41, 53, 74, .10);
+  --shadow-soft: 0 10px 28px rgba(41, 53, 74, .07);
 }
 
 * {
@@ -33,8 +33,8 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(circle at 20% 0%, rgba(15, 159, 122, .10), transparent 34%),
-    radial-gradient(circle at 88% 8%, rgba(54, 98, 227, .12), transparent 32%),
+    radial-gradient(circle at 18% 0%, rgba(47, 191, 155, .14), transparent 34%),
+    radial-gradient(circle at 88% 8%, rgba(155, 123, 234, .16), transparent 32%),
     var(--bg);
   color: var(--ink);
   font-family: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -109,13 +109,14 @@ button {
   position: sticky;
   top: 0;
   height: 100vh;
-  background: linear-gradient(180deg, #39556d 0%, #45657b 58%, #31495f 100%);
+  background: linear-gradient(180deg, #edf7f6 0%, #eef2ff 58%, #f8f7ff 100%);
+  color: var(--ink);
   color: #f8fbff;
   padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 28px;
-  border-right: 1px solid rgba(255, 255, 255, .08);
+  border-right: 1px solid var(--line);
 }
 
 .brand {
@@ -130,8 +131,8 @@ button {
   border-radius: 8px;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  box-shadow: 0 14px 34px rgba(15, 159, 122, .32);
+  background: linear-gradient(135deg, var(--accent), var(--violet));
+  box-shadow: 0 14px 34px rgba(109, 125, 242, .22);
   font-weight: 900;
   font-size: 24px;
   animation: iconFloat 3.4s ease-in-out infinite;
@@ -163,7 +164,7 @@ button {
 
 .sidebar .brand p,
 .sidebar label {
-  color: #aebbd0;
+  color: var(--muted);
 }
 
 .nav-tabs {
@@ -175,7 +176,7 @@ button {
   min-height: 44px;
   border-radius: 8px;
   background: transparent;
-  color: #dce5f3;
+  color: var(--muted);
   text-align: left;
   padding: 0 14px;
   font-weight: 700;
@@ -205,8 +206,8 @@ button {
 
 .nav-tab.active,
 .nav-tab:hover {
-  background: rgba(255, 255, 255, .10);
-  color: #ffffff;
+  background: rgba(255, 255, 255, .72);
+  color: var(--accent-2);
 }
 
 .month-picker {
@@ -235,9 +236,9 @@ textarea:focus {
 }
 
 .month-picker input {
-  background: rgba(255, 255, 255, .10);
-  border-color: rgba(255, 255, 255, .16);
-  color: #fff;
+  background: rgba(255, 255, 255, .72);
+  border-color: var(--line);
+  color: var(--ink);
 }
 
 .workspace {

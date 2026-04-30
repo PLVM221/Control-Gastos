@@ -37,3 +37,5 @@
 | 09:03 | feat(ui): agregar iconos animados, vista log de actividad y quitar export/ejemplo |
 | 09:03 | feat(audit): registrar cargas, modificaciones, eliminaciones y borrado total |
 | 09:03 | test: node --check app.js OK |
+| 10:37 | style(ui): actualizar paleta a menta, lavanda y ambar suave |
+| 10:37 | test: node --check app.js OK |
