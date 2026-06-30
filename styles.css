@@ -614,8 +614,7 @@ textarea:focus {
 }
 
 .income-card,
-.plan-card,
-.rule-card {
+.plan-card {
   border: 1px solid #d7dde4;
   border-radius: 12px;
   background: #ffffff;
@@ -667,8 +666,7 @@ textarea:focus {
   margin-bottom: 18px;
 }
 
-.plan-card-head h3,
-.rule-card h3 {
+.plan-card-head h3 {
   margin: 0;
   color: #071f42;
   font-size: 22px;
@@ -680,22 +678,6 @@ textarea:focus {
 
 .plan-card-head span {
   display: none;
-}
-
-.rule-card {
-  padding: 16px;
-  text-align: center;
-}
-
-.rule-card h3 {
-  color: #0f735d;
-  margin-bottom: 10px;
-}
-
-.rule-card p {
-  margin: 6px 0;
-  color: #29354a;
-  font-weight: 750;
 }
 
 .plan-table-wrap {
@@ -866,93 +848,6 @@ textarea:focus {
   color: var(--muted);
   font-size: 12px;
   font-weight: 700;
-}
-
-.tips-band,
-.reminder-band {
-  border: 1px solid #d7dde4;
-  border-radius: 12px;
-  background: #fbfefd;
-  box-shadow: 0 2px 10px rgba(7, 31, 66, .06);
-}
-
-.tips-band {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 18px;
-  align-items: center;
-  padding: 18px 24px;
-}
-
-.tips-title,
-.tip-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.tips-title {
-  color: #0b765f;
-  text-transform: uppercase;
-  font-size: 20px;
-  line-height: 1;
-  font-weight: 900;
-}
-
-.tips-title svg,
-.tip-item > svg,
-.reminder-band svg {
-  flex: 0 0 auto;
-  width: 74px;
-  height: 74px;
-  color: #16416c;
-  stroke-width: 2.4;
-}
-
-.tips-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.tip-item {
-  min-width: 0;
-  padding-left: 16px;
-  border-left: 2px dashed #c9d6d8;
-}
-
-.tip-item div {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-.tip-item strong {
-  color: #0b765f;
-  font-size: 15px;
-  line-height: 1;
-  text-transform: uppercase;
-}
-
-.tip-item span {
-  color: #182333;
-  font-family: Manrope, sans-serif;
-  font-size: 14px;
-  line-height: 1.35;
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
-.reminder-band {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 16px;
-  background: linear-gradient(90deg, #fff7d7, #fffdf5);
-  color: #071f42;
-  text-align: center;
-  font-weight: 750;
 }
 
 .metrics-grid {
@@ -1604,10 +1499,6 @@ tbody tr:hover {
     align-items: stretch;
   }
 
-  .tips-band {
-    grid-template-columns: 1fr;
-  }
-
   .insight-grid {
     grid-template-columns: 1fr 1fr;
   }
@@ -1706,8 +1597,7 @@ tbody tr:hover {
     grid-template-columns: 1fr 1fr;
   }
 
-  .plan-sidebar,
-  .tips-grid {
+  .plan-sidebar {
     grid-template-columns: 1fr 1fr;
   }
 
@@ -1810,8 +1700,7 @@ tbody tr:hover {
   .donut-layout,
   .top-expenses,
   .plan-sidebar,
-  .plan-summary,
-  .tips-grid {
+  .plan-summary {
     grid-template-columns: 1fr;
   }
 
@@ -2039,17 +1928,6 @@ tbody tr:hover {
 
   .income-card strong {
     font-size: 30px;
-  }
-
-  .tips-band,
-  .reminder-band {
-    padding: 12px;
-  }
-
-  .tips-title,
-  .reminder-band {
-    align-items: flex-start;
-    text-align: left;
   }
 
   .metric,

@@ -188,7 +188,6 @@ const els = {
   donutTotal: document.querySelector("#donutTotal"),
   alertsList: document.querySelector("#alertsList"),
   alertCount: document.querySelector("#alertCount"),
-  topExpenses: document.querySelector("#topExpenses"),
   toast: document.querySelector("#toast"),
   activityList: document.querySelector("#activityList"),
   activityCount: document.querySelector("#activityCount"),
@@ -479,7 +478,6 @@ function renderDashboard() {
     els.categoryBars.append(emptyState());
     renderDonut([], income);
     renderAlerts({ income, expenses, balance, committed, committedRate, expenseItems });
-    renderTopExpenses(expenseItems);
     renderTrendChart();
     return;
   }
@@ -504,7 +502,6 @@ function renderDashboard() {
 
   renderDonut(rows, percentBase);
   renderAlerts({ income, expenses, balance, committed, committedRate, expenseItems });
-  renderTopExpenses(expenseItems);
   renderTrendChart();
 }
 
@@ -623,50 +620,6 @@ function renderActivity() {
       <time>${formatDateTime(event.createdAt)}</time>
     `;
     els.activityList.append(item);
-  });
-}
-
-function renderTopExpenses(expenseItems) {
-  const rows = expenseItems
-    .map((item) => ({ ...item, monthAmount: monthlyAmount(item, state.month) }))
-    .sort((a, b) => b.monthAmount - a.monthAmount)
-    .slice(0, 4);
-
-  els.topExpenses.innerHTML = "";
-  const tips = [
-    {
-      icon: "list-checks",
-      title: "Segui tus gastos",
-      text: rows[0] ? `Mayor rubro: ${escapeHtml(itemLabel(rows[0]))}.` : "Carga gastos para ver prioridades.",
-    },
-    {
-      icon: "banknote",
-      title: "Controla efectivo",
-      text: "Usa efectivo o transferencias para medir mejor.",
-    },
-    {
-      icon: "shopping-basket",
-      title: "Planifica compras",
-      text: "Agrupa compras y evita pagos impulsivos.",
-    },
-    {
-      icon: "bar-chart-3",
-      title: "Revisa cada mes",
-      text: "Ajusta importes y presupuestos al cerrar el periodo.",
-    },
-  ];
-
-  tips.forEach((tip) => {
-    const div = document.createElement("div");
-    div.className = "tip-item";
-    div.innerHTML = `
-      <i data-lucide="${tip.icon}"></i>
-      <div>
-        <strong>${tip.title}</strong>
-        <span>${tip.text}</span>
-      </div>
-    `;
-    els.topExpenses.append(div);
   });
 }
 

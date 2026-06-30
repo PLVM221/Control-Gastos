@@ -80,3 +80,5 @@
 | 14:12 | test: node --check app.js OK, ids HTML OK, local 200 |
 | 14:15 | fix(ui): quitar modo fullscreen que ocultaba sidebar y toolbar |
 | 14:15 | test: node --check app.js OK, ids HTML OK, local 200 |
+| 14:39 | style(ui): eliminar regla general, tips y recordatorio del panel |
+| 14:39 | test: node --check app.js OK, local 200 |
