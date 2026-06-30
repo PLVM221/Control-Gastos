@@ -86,3 +86,5 @@
 | 14:42 | fix(ui): quitar botonera duplicada del panel y mejorar imagenes fallback |
 | 14:42 | test: node --check app.js OK, ids HTML OK, SVG XML OK |
 | 14:50 | config(auth): resetear clave de martin a 12345 |
+| 15:07 | fix(panel): priorizar reglas por nombre para trabajo, estudios y gastos varios |
+| 15:07 | test: node --check app.js OK, local 200 |

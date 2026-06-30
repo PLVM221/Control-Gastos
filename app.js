@@ -59,10 +59,10 @@ const planBuckets = {
   },
   education: {
     title: "Educacion",
-    description: "Escuela, utiles, actividades y salidas escolares",
+    description: "Estudios, cursos, escuela, utiles y actividades",
     color: "#6fb44f",
     image: "assets/illustrations/education.svg",
-    keywords: ["educacion", "escuela", "colegio", "jardin", "utiles", "actividad"],
+    keywords: ["educacion", "estudio", "estudios", "escuela", "colegio", "jardin", "utiles", "actividad"],
   },
   leisure: {
     title: "Ocio / extras",
@@ -862,6 +862,11 @@ function planRows(expenseItems) {
 
 function planBucketFor(item) {
   const text = normalizeText(`${item.name} ${item.notes || ""} ${categoryLabels[item.category] || ""}`);
+  const name = normalizeText(item.name);
+  if (name.includes("trabajo")) return "work";
+  if (name.includes("estudio") || name.includes("estudios")) return "education";
+  if (name.includes("gastos varios") || name.includes("varios")) return "leisure";
+  if (name.includes("mama") || name.includes("mamá")) return "leisure";
   const matches = Object.entries(planBuckets)
     .map(([key, bucket]) => ({
       key,
