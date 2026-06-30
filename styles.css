@@ -325,6 +325,10 @@ textarea:focus {
   display: none;
 }
 
+.dashboard-mode .plan-actions {
+  display: flex;
+}
+
 .dashboard-mode .view.active {
   gap: 12px;
 }
@@ -498,6 +502,59 @@ textarea:focus {
   border-radius: 0;
   background: transparent;
   box-shadow: none;
+}
+
+.plan-actions {
+  display: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 0 4px;
+  font-family: Manrope, sans-serif !important;
+}
+
+.plan-action,
+.plan-month {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid #d7dde4;
+  border-radius: 8px;
+  padding: 0 12px;
+  background: #ffffff;
+  color: #315b9f;
+  box-shadow: 0 8px 20px rgba(7, 31, 66, .08);
+  font-family: Manrope, sans-serif !important;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.plan-action.primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #ffffff;
+}
+
+.plan-action.danger {
+  color: #c9873f;
+  padding: 0 10px;
+}
+
+.plan-action svg {
+  width: 16px;
+  height: 16px;
+}
+
+.plan-month input {
+  border: 0;
+  padding: 0;
+  min-height: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #071f42;
+  font-family: Manrope, sans-serif !important;
+  font-weight: 800;
 }
 
 .plan-hero {

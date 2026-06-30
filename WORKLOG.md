@@ -75,3 +75,6 @@
 | 13:57 | fix(panel): mostrar cada gasto como fila propia en la infografia |
 | 13:57 | fix(sync): reintentar Supabase con payload legacy y mostrar error real corto |
 | 13:57 | test: node --check app.js OK, ids HTML OK, Supabase read-only OK |
+| 14:12 | fix(ui): restaurar acciones principales dentro del panel fullscreen |
+| 14:12 | fix(panel): calcular porcentajes contra gastos si no hay ingreso cargado |
+| 14:12 | test: node --check app.js OK, ids HTML OK, local 200 |

@@ -124,6 +124,7 @@ const state = {
 
 const els = {
   monthInput: document.querySelector("#monthInput"),
+  planMonthInput: document.querySelector("#planMonthInput"),
   monthTitle: document.querySelector("#monthTitle"),
   navTabs: document.querySelectorAll(".nav-tab"),
   views: {
@@ -208,6 +209,7 @@ init();
 
 async function init() {
   els.monthInput.value = state.month;
+  els.planMonthInput.value = state.month;
   els.startInput.value = state.month;
   bindEvents();
   await initAuth();
@@ -220,6 +222,14 @@ async function init() {
 function bindEvents() {
   els.monthInput.addEventListener("change", (event) => {
     state.month = event.target.value || currentMonth();
+    els.planMonthInput.value = state.month;
+    els.startInput.value ||= state.month;
+    render();
+  });
+
+  els.planMonthInput.addEventListener("change", (event) => {
+    state.month = event.target.value || currentMonth();
+    els.monthInput.value = state.month;
     els.startInput.value ||= state.month;
     render();
   });
@@ -282,6 +292,8 @@ function bindEvents() {
       openEntryModal();
     });
   });
+
+  document.querySelector("[data-plan-clear]")?.addEventListener("click", clearAll);
 
   els.openEntryBtn.addEventListener("click", () => {
     resetForm();
@@ -428,6 +440,7 @@ function render() {
 
 function renderShell() {
   els.monthTitle.textContent = formatMonth(state.month);
+  els.planMonthInput.value = state.month;
   els.navTabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.view === state.view));
   Object.entries(els.views).forEach(([view, element]) => {
     element.classList.toggle("active", view === state.view);
@@ -445,6 +458,7 @@ function renderDashboard() {
   const committed = sum(expenseItems.filter((item) => item.frequency !== "once"));
   const committedRate = income ? Math.round((committed / income) * 100) : 0;
   const savingsRate = income ? Math.round((balance / income) * 100) : 0;
+  const percentBase = income || expenses;
 
   els.incomeTotal.textContent = money(income);
   els.expenseTotal.textContent = money(expenses);
@@ -453,9 +467,9 @@ function renderDashboard() {
   els.incomeHint.textContent = `${incomes.length} ingresos`;
   els.expenseHint.textContent = `${expenseItems.length} gastos`;
   els.balanceHint.textContent = balance >= 0 ? "Margen positivo" : "Deficit mensual";
-  els.committedHint.textContent = income ? `${Math.round((expenses / income) * 100)}%` : "0%";
-  els.savingsRate.textContent = `${savingsRate}% ahorro`;
-  els.planSavingsRate.textContent = `${savingsRate}% ahorro`;
+  els.committedHint.textContent = percentBase ? `${Math.round((expenses / percentBase) * 100)}%` : "0%";
+  els.savingsRate.textContent = income ? `${savingsRate}% ahorro` : "Sin ingreso";
+  els.planSavingsRate.textContent = income ? `${savingsRate}% ahorro` : "Carga ingreso";
   els.itemCount.textContent = `${active.length} items`;
   els.planTitle.textContent = formatMonth(state.month);
 
@@ -473,7 +487,7 @@ function renderDashboard() {
 
   rows.forEach((plan) => {
     const row = document.createElement("div");
-    const percent = income ? Math.round((plan.total / income) * 1000) / 10 : 0;
+    const percent = percentBase ? Math.round((plan.total / percentBase) * 1000) / 10 : 0;
     row.className = "plan-row";
     row.innerHTML = `
       <div class="plan-row-icon" style="background: ${plan.color}">
@@ -489,7 +503,7 @@ function renderDashboard() {
     els.categoryBars.append(row);
   });
 
-  renderDonut(rows, income);
+  renderDonut(rows, percentBase);
   renderAlerts({ income, expenses, balance, committed, committedRate, expenseItems });
   renderTopExpenses(expenseItems);
   renderTrendChart();
