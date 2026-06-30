@@ -445,7 +445,6 @@ function renderShell() {
   Object.entries(els.views).forEach(([view, element]) => {
     element.classList.toggle("active", view === state.view);
   });
-  document.body.classList.toggle("dashboard-mode", state.view === "dashboard");
 }
 
 function renderDashboard() {

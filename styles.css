@@ -300,41 +300,8 @@ textarea:focus {
   min-width: 0;
 }
 
-.dashboard-mode .app-shell {
-  grid-template-columns: 1fr;
-  background: #f6f8fb;
-}
-
-.dashboard-mode .sidebar,
-.dashboard-mode .toolbar {
-  display: none;
-}
-
-.dashboard-mode .workspace {
-  width: min(1120px, 100%);
-  margin: 0 auto;
-  padding: 44px 16px 16px;
-}
-
-.dashboard-mode .plan-summary,
-.dashboard-mode .trend-section,
-.dashboard-mode .alerts-section,
-.dashboard-mode .plan-hero,
-.dashboard-mode .rule-card,
-.dashboard-mode .reminder-band {
-  display: none;
-}
-
-.dashboard-mode .plan-actions {
-  display: flex;
-}
-
-.dashboard-mode .view.active {
-  gap: 12px;
-}
-
-.dashboard-mode .salary-plan,
-.dashboard-mode .salary-plan * {
+.salary-plan,
+.salary-plan * {
   font-family: "Roboto Condensed", "Arial Narrow", Manrope, sans-serif;
 }
 
@@ -505,7 +472,7 @@ textarea:focus {
 }
 
 .plan-actions {
-  display: none;
+  display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;

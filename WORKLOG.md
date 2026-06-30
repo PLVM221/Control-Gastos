@@ -78,3 +78,5 @@
 | 14:12 | fix(ui): restaurar acciones principales dentro del panel fullscreen |
 | 14:12 | fix(panel): calcular porcentajes contra gastos si no hay ingreso cargado |
 | 14:12 | test: node --check app.js OK, ids HTML OK, local 200 |
+| 14:15 | fix(ui): quitar modo fullscreen que ocultaba sidebar y toolbar |
+| 14:15 | test: node --check app.js OK, ids HTML OK, local 200 |
