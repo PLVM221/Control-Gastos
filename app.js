@@ -865,15 +865,19 @@ function sum(entries, month = state.month) {
 }
 
 function planRows(expenseItems) {
-  const rows = new Map();
-  expenseItems.forEach((item) => {
+  return expenseItems
+    .map((item) => {
     const bucketKey = planBucketFor(item);
     const bucket = planBuckets[bucketKey];
-    const current = rows.get(bucketKey) || { ...bucket, key: bucketKey, total: 0 };
-    current.total += monthlyAmount(item, state.month);
-    rows.set(bucketKey, current);
-  });
-  return [...rows.values()].filter((row) => row.total > 0);
+      return {
+        ...bucket,
+        key: bucketKey,
+        title: item.name || bucket.title,
+        description: item.notes || bucket.description,
+        total: monthlyAmount(item, state.month),
+      };
+    })
+    .filter((row) => row.total > 0);
 }
 
 function planBucketFor(item) {
@@ -1053,26 +1057,41 @@ async function syncFromSupabase() {
     return;
   }
   document.body.classList.add("is-syncing");
-  const { data, error } = await supabaseClient
+  let { data, error } = await supabaseClient
     .from(tableName())
     .select("*")
     .eq("user_name", state.currentUser.name)
     .order("created_at", { ascending: true });
 
+  if (error && isMissingColumnError(error, "user_name")) {
+    ({ data, error } = await supabaseClient
+      .from(tableName())
+      .select("*")
+      .order("created_at", { ascending: true }));
+  }
+
   if (error) {
     console.error("Supabase sync failed:", error.message);
     document.body.classList.remove("is-syncing");
-    showToast("No se pudo sincronizar", "warning");
+    showToast(`No se pudo sincronizar: ${shortError(error)}`, "warning");
     return;
   }
 
   state.entries = data.map(fromDbEntry);
-  const { data: activityData, error: activityError } = await supabaseClient
+  let { data: activityData, error: activityError } = await supabaseClient
     .from(activityTableName())
     .select("*")
     .eq("user_name", state.currentUser.name)
     .order("created_at", { ascending: false })
     .limit(100);
+
+  if (activityError && isMissingColumnError(activityError, "user_name")) {
+    ({ data: activityData, error: activityError } = await supabaseClient
+      .from(activityTableName())
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(100));
+  }
 
   if (!activityError && activityData) {
     state.activity = activityData.map(fromDbActivity);
@@ -1092,12 +1111,18 @@ async function persist(entry) {
     return;
   }
 
-  const { error } = await supabaseClient
+  let { error } = await supabaseClient
     .from(tableName())
     .upsert(toDbEntry(entry), { onConflict: "id" });
 
+  if (error && shouldRetryLegacy(error)) {
+    ({ error } = await supabaseClient
+      .from(tableName())
+      .upsert(toLegacyDbEntry(entry), { onConflict: "id" }));
+  }
+
   if (error) console.error("Supabase save failed:", error.message);
-  showToast(error ? "Guardado local, Supabase fallo" : "Movimiento guardado", error ? "warning" : "success");
+  showToast(error ? `Guardado local, Supabase fallo: ${shortError(error)}` : "Movimiento guardado", error ? "warning" : "success");
 }
 
 async function persistMany(entries) {
@@ -1107,12 +1132,18 @@ async function persistMany(entries) {
     return;
   }
 
-  const { error } = await supabaseClient
+  let { error } = await supabaseClient
     .from(tableName())
     .upsert(entries.map(toDbEntry), { onConflict: "id" });
 
+  if (error && shouldRetryLegacy(error)) {
+    ({ error } = await supabaseClient
+      .from(tableName())
+      .upsert(entries.map(toLegacyDbEntry), { onConflict: "id" }));
+  }
+
   if (error) console.error("Supabase bulk save failed:", error.message);
-  showToast(error ? "Ejemplo guardado local" : "Ejemplo cargado", error ? "warning" : "success");
+  showToast(error ? `Ejemplo guardado local: ${shortError(error)}` : "Ejemplo cargado", error ? "warning" : "success");
 }
 
 async function deleteRemote(id) {
@@ -1120,9 +1151,12 @@ async function deleteRemote(id) {
     showToast("Movimiento borrado", "success");
     return;
   }
-  const { error } = await supabaseClient.from(tableName()).delete().eq("id", id).eq("user_name", state.currentUser.name);
+  let { error } = await supabaseClient.from(tableName()).delete().eq("id", id).eq("user_name", state.currentUser.name);
+  if (error && isMissingColumnError(error, "user_name")) {
+    ({ error } = await supabaseClient.from(tableName()).delete().eq("id", id));
+  }
   if (error) console.error("Supabase delete failed:", error.message);
-  showToast(error ? "Borrado local, Supabase fallo" : "Movimiento borrado", error ? "warning" : "success");
+  showToast(error ? `Borrado local, Supabase fallo: ${shortError(error)}` : "Movimiento borrado", error ? "warning" : "success");
 }
 
 async function clearRemote() {
@@ -1130,9 +1164,14 @@ async function clearRemote() {
     showToast("Datos borrados", "success");
     return;
   }
-  const { error } = await supabaseClient.from(tableName()).delete().eq("user_name", state.currentUser.name);
+  let { error } = await supabaseClient.from(tableName()).delete().eq("user_name", state.currentUser.name);
+  if (error && isMissingColumnError(error, "user_name")) {
+    console.error("Supabase clear skipped: user_name column missing");
+    showToast("Borrado local. Supabase viejo sin usuarios", "warning");
+    return;
+  }
   if (error) console.error("Supabase clear failed:", error.message);
-  showToast(error ? "Borrado local, Supabase fallo" : "Datos borrados", error ? "warning" : "success");
+  showToast(error ? `Borrado local, Supabase fallo: ${shortError(error)}` : "Datos borrados", error ? "warning" : "success");
 }
 
 function tableName() {
@@ -1141,6 +1180,22 @@ function tableName() {
 
 function activityTableName() {
   return supabaseConfig.activityTable || "activity_logs";
+}
+
+function shouldRetryLegacy(error) {
+  return isMissingColumnError(error) || /schema cache|PGRST204/i.test(error?.message || "");
+}
+
+function isMissingColumnError(error, column = "") {
+  const message = `${error?.message || ""} ${error?.details || ""} ${error?.hint || ""}`;
+  if (!/column|schema cache|PGRST204|does not exist|Could not find/i.test(message)) return false;
+  return !column || message.includes(column);
+}
+
+function shortError(error) {
+  return String(error?.message || "error")
+    .replace(/^Could not find the '([^']+)'.*$/i, "falta columna $1")
+    .slice(0, 80);
 }
 
 function toDbEntry(entry) {
@@ -1163,6 +1218,23 @@ function toDbEntry(entry) {
     priority: entry.priority || "normal",
     budget: entry.budget || 0,
     tags: entry.tags || [],
+    notes: entry.notes || "",
+    created_at: entry.createdAt || new Date().toISOString(),
+  };
+}
+
+function toLegacyDbEntry(entry) {
+  return {
+    id: entry.id,
+    name: entry.name,
+    kind: entry.kind,
+    category: entry.category,
+    amount: entry.amount,
+    start: entry.start,
+    frequency: entry.frequency,
+    duration: entry.duration || 0,
+    payment: entry.payment,
+    installments: entry.installments || 1,
     notes: entry.notes || "",
     created_at: entry.createdAt || new Date().toISOString(),
   };
@@ -1212,7 +1284,10 @@ async function addActivity(action, entry) {
   renderActivity();
 
   if (!supabaseClient) return;
-  const { error } = await supabaseClient.from(activityTableName()).insert(toDbActivity(event));
+  let { error } = await supabaseClient.from(activityTableName()).insert(toDbActivity(event));
+  if (error && shouldRetryLegacy(error)) {
+    ({ error } = await supabaseClient.from(activityTableName()).insert(toLegacyDbActivity(event)));
+  }
   if (error) console.error("Supabase activity log failed:", error.message);
 }
 
@@ -1266,6 +1341,20 @@ function toDbActivity(event) {
     entry_id: event.entryId,
     entry_name: event.entryName,
     actor_name: event.actorName || currentActorName(),
+    amount: event.amount,
+    kind: event.kind,
+    category: event.category,
+    detail: event.detail,
+    created_at: event.createdAt,
+  };
+}
+
+function toLegacyDbActivity(event) {
+  return {
+    id: event.id,
+    action: event.action,
+    entry_id: event.entryId,
+    entry_name: event.entryName,
     amount: event.amount,
     kind: event.kind,
     category: event.category,

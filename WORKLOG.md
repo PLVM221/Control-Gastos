@@ -72,3 +72,6 @@
 | 13:09 | test: node --check app.js OK, ids HTML OK, SVG XML OK |
 | 13:15 | style(ui): ajustar formato, tipografia, tabla, colores e iconos al JPG de referencia |
 | 13:15 | test: node --check app.js OK, ids HTML OK, SVG XML OK |
+| 13:57 | fix(panel): mostrar cada gasto como fila propia en la infografia |
+| 13:57 | fix(sync): reintentar Supabase con payload legacy y mostrar error real corto |
+| 13:57 | test: node --check app.js OK, ids HTML OK, Supabase read-only OK |
