@@ -29,6 +29,13 @@ const planBuckets = {
     image: "assets/illustrations/services.svg",
     keywords: ["servicio", "luz", "gas", "agua", "internet", "telefono", "telefonia", "streaming", "tv"],
   },
+  work: {
+    title: "Trabajo",
+    description: "Gastos laborales, traslados, herramientas y pagos de trabajo",
+    color: "#7a47c2",
+    image: "assets/illustrations/work.svg",
+    keywords: ["trabajo", "laboral", "oficina", "herramienta"],
+  },
   food: {
     title: "Alimentacion",
     description: "Compras de supermercado, comida y articulos de consumo",
@@ -72,15 +79,33 @@ const planBuckets = {
     keywords: ["emergencia", "imprevisto", "salud", "medico", "arreglo"],
   },
   cards: {
-    title: "Tarjetas / creditos",
+    title: "Creditos",
     description: "Consumos, cuotas, prestamos y financiaciones activas",
-    color: "#315b9f",
-    image: "assets/illustrations/cards.svg",
+    color: "#2f5b9c",
+    image: "assets/illustrations/credit.svg",
     keywords: ["tarjeta", "credito", "prestamo", "cuota"],
   },
 };
 
-const planBucketOrder = ["housing", "services", "food", "transport", "savings", "education", "leisure", "emergency", "cards"];
+const planBucketOrder = ["housing", "services", "work", "food", "transport", "savings", "education", "leisure", "emergency", "cards"];
+
+const planPalette = [
+  "#2378c9",
+  "#6f45b8",
+  "#ef3f68",
+  "#f59b22",
+  "#16a698",
+  "#6fb44f",
+  "#80868b",
+  "#f7bd31",
+  "#2f5b9c",
+  "#1aa6b8",
+  "#9a5bd6",
+  "#d4577e",
+  "#5470c6",
+  "#91cc75",
+  "#fac858",
+];
 
 const frequencyLabels = {
   monthly: "Mensual",
@@ -124,7 +149,6 @@ const state = {
 
 const els = {
   monthInput: document.querySelector("#monthInput"),
-  planMonthInput: document.querySelector("#planMonthInput"),
   monthTitle: document.querySelector("#monthTitle"),
   navTabs: document.querySelectorAll(".nav-tab"),
   views: {
@@ -208,7 +232,6 @@ init();
 
 async function init() {
   els.monthInput.value = state.month;
-  els.planMonthInput.value = state.month;
   els.startInput.value = state.month;
   bindEvents();
   await initAuth();
@@ -221,14 +244,6 @@ async function init() {
 function bindEvents() {
   els.monthInput.addEventListener("change", (event) => {
     state.month = event.target.value || currentMonth();
-    els.planMonthInput.value = state.month;
-    els.startInput.value ||= state.month;
-    render();
-  });
-
-  els.planMonthInput.addEventListener("change", (event) => {
-    state.month = event.target.value || currentMonth();
-    els.monthInput.value = state.month;
     els.startInput.value ||= state.month;
     render();
   });
@@ -291,8 +306,6 @@ function bindEvents() {
       openEntryModal();
     });
   });
-
-  document.querySelector("[data-plan-clear]")?.addEventListener("click", clearAll);
 
   els.openEntryBtn.addEventListener("click", () => {
     resetForm();
@@ -439,7 +452,6 @@ function render() {
 
 function renderShell() {
   els.monthTitle.textContent = formatMonth(state.month);
-  els.planMonthInput.value = state.month;
   els.navTabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.view === state.view));
   Object.entries(els.views).forEach(([view, element]) => {
     element.classList.toggle("active", view === state.view);
@@ -471,7 +483,9 @@ function renderDashboard() {
   els.itemCount.textContent = `${active.length} items`;
   els.planTitle.textContent = formatMonth(state.month);
 
-  const rows = planRows(expenseItems).sort((a, b) => planBucketOrder.indexOf(a.key) - planBucketOrder.indexOf(b.key));
+  const rows = planRows(expenseItems)
+    .sort((a, b) => planBucketOrder.indexOf(a.key) - planBucketOrder.indexOf(b.key) || b.total - a.total)
+    .map((row, index) => ({ ...row, color: planPalette[index % planPalette.length] }));
 
   els.categoryBars.innerHTML = "";
   if (!rows.length) {
@@ -848,9 +862,15 @@ function planRows(expenseItems) {
 
 function planBucketFor(item) {
   const text = normalizeText(`${item.name} ${item.notes || ""} ${categoryLabels[item.category] || ""}`);
-  const match = Object.entries(planBuckets).find(([, bucket]) => bucket.keywords.some((keyword) => text.includes(keyword)));
-  if (match) return match[0];
-  if (item.category === "fixed") return "housing";
+  const matches = Object.entries(planBuckets)
+    .map(([key, bucket]) => ({
+      key,
+      score: bucket.keywords.reduce((total, keyword) => total + (text.includes(keyword) ? 1 : 0), 0),
+      order: planBucketOrder.indexOf(key),
+    }))
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score || a.order - b.order);
+  if (matches.length) return matches[0].key;
   if (item.category === "additional") return "services";
   if (item.category === "card" || item.category === "credit") return "cards";
   if (item.category === "future") return "savings";

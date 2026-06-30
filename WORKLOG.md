@@ -82,3 +82,6 @@
 | 14:15 | test: node --check app.js OK, ids HTML OK, local 200 |
 | 14:39 | style(ui): eliminar regla general, tips y recordatorio del panel |
 | 14:39 | test: node --check app.js OK, local 200 |
+| 14:42 | fix(chart): asignar colores unicos por gasto en torta y leyenda |
+| 14:42 | fix(ui): quitar botonera duplicada del panel y mejorar imagenes fallback |
+| 14:42 | test: node --check app.js OK, ids HTML OK, SVG XML OK |
