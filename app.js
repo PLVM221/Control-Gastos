@@ -16,17 +16,17 @@ const categoryLabels = {
 
 const categoryPlan = {
   fixed: {
-    title: "Gastos fijos",
-    description: "Alquiler, servicios base, abonos y compromisos mensuales",
+    title: "Vivienda / fijos",
+    description: "Alquiler, expensas, cuotas base y compromisos mensuales",
     icon: "home",
   },
   additional: {
-    title: "Servicios y extras",
-    description: "Servicios, mantenimiento, compras o pagos adicionales",
-    icon: "plug-zap",
+    title: "Servicios",
+    description: "Luz, gas, agua, internet, telefonia y streaming",
+    icon: "utility-pole",
   },
   casual: {
-    title: "Compras casuales",
+    title: "Alimentacion / ocio",
     description: "Supermercado, salidas, gustos personales y gastos variables",
     icon: "shopping-cart",
   },
@@ -37,13 +37,13 @@ const categoryPlan = {
   },
   credit: {
     title: "Creditos",
-    description: "Prestamos, financiaciones y cuotas de credito",
+    description: "Prestamos, financiaciones y cuotas activas",
     icon: "landmark",
   },
   future: {
-    title: "Futuro",
-    description: "Gastos planificados, metas, ahorro o compromisos proximos",
-    icon: "calendar-clock",
+    title: "Ahorro / futuro",
+    description: "Metas familiares, emergencias y compromisos proximos",
+    icon: "piggy-bank",
   },
 };
 
@@ -62,13 +62,13 @@ const statusLabels = {
 };
 
 const categoryColors = {
-  fixed: "#6d7df2",
-  additional: "#2fbf9b",
-  casual: "#efb85d",
-  card: "#c9873f",
-  credit: "#9b7bea",
-  future: "#4fb8d1",
-  income: "#2fbf9b",
+  fixed: "#2378c9",
+  additional: "#6f45b8",
+  casual: "#ef3f68",
+  card: "#f59b22",
+  credit: "#6fb44f",
+  future: "#16a698",
+  income: "#0d8f73",
 };
 
 const appUsers = {
@@ -417,7 +417,7 @@ function renderDashboard() {
   els.categoryBars.innerHTML = "";
   if (!rows.length) {
     els.categoryBars.append(emptyState());
-    renderDonut([]);
+    renderDonut([], income);
     renderAlerts({ income, expenses, balance, committed, committedRate, expenseItems });
     renderTopExpenses(expenseItems);
     renderTrendChart();
@@ -447,7 +447,7 @@ function renderDashboard() {
     els.categoryBars.append(row);
   });
 
-  renderDonut(rows);
+  renderDonut(rows, income);
   renderAlerts({ income, expenses, balance, committed, committedRate, expenseItems });
   renderTopExpenses(expenseItems);
   renderTrendChart();
@@ -661,13 +661,14 @@ function renderAlerts(summary) {
   });
 }
 
-function renderDonut(rows) {
+function renderDonut(rows, baseTotal = 0) {
   const canvas = els.donutChart;
   const ctx = canvas.getContext("2d");
   const size = canvas.width;
   const center = size / 2;
-  const radius = 78;
+  const radius = 94;
   const total = rows.reduce((acc, [, value]) => acc + value, 0);
+  const percentBase = baseTotal || total;
 
   ctx.clearRect(0, 0, size, size);
   els.donutLegend.innerHTML = "";
@@ -682,10 +683,30 @@ function renderDonut(rows) {
   rows.forEach(([category, value]) => {
     const angle = (value / total) * Math.PI * 2;
     ctx.beginPath();
+    ctx.moveTo(center, center);
     ctx.arc(center, center, radius, start, start + angle);
-    ctx.lineWidth = 28;
-    ctx.strokeStyle = categoryColors[category];
+    ctx.closePath();
+    ctx.fillStyle = categoryColors[category];
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#ffffff";
     ctx.stroke();
+
+    const middle = start + angle / 2;
+    const labelPercent = (value / percentBase) * 100;
+    if (angle > 0.22) {
+      const labelRadius = radius * .63;
+      const x = center + Math.cos(middle) * labelRadius;
+      const y = center + Math.sin(middle) * labelRadius;
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "900 15px Manrope, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.shadowColor = "rgba(7, 26, 52, .38)";
+      ctx.shadowBlur = 4;
+      ctx.fillText(formatPercent(labelPercent), x, y);
+      ctx.shadowBlur = 0;
+    }
     start += angle;
 
     const row = document.createElement("div");
@@ -693,18 +714,10 @@ function renderDonut(rows) {
     row.innerHTML = `
       <span class="legend-dot" style="background: ${categoryColors[category]}"></span>
       <span>${categoryLabels[category]}</span>
-      <strong>${formatPercent(Math.round((value / total) * 1000) / 10)}</strong>
+      <strong>${formatPercent(Math.round((value / percentBase) * 1000) / 10)}</strong>
     `;
     els.donutLegend.append(row);
   });
-
-  ctx.fillStyle = "#263445";
-  ctx.font = "800 18px Manrope, sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText(`${rows.length}`, center, center - 2);
-  ctx.fillStyle = "#647084";
-  ctx.font = "700 12px Manrope, sans-serif";
-  ctx.fillText("rubros", center, center + 16);
 }
 
 function drawEmptyDonut(ctx, center, radius) {

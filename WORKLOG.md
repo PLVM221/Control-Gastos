@@ -59,3 +59,11 @@
 | 16:24 | fix(db): usar user_name para separar datos y logs por usuario |
 | 16:24 | test: node --check app.js OK |
 | 16:00 | docs(auth): dejar referencias de usuario como admin/Martin |
+
+### 2026-06-30
+
+| Hora | Cambio |
+|------|--------|
+| 12:56 | style(ui): subir contraste y color del dashboard mensual tipo infografia |
+| 12:56 | feat(chart): cambiar dona por torta con porcentajes visibles |
+| 12:56 | test: node --check app.js OK |
