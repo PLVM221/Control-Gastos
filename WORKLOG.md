@@ -67,3 +67,6 @@
 | 12:56 | style(ui): subir contraste y color del dashboard mensual tipo infografia |
 | 12:56 | feat(chart): cambiar dona por torta con porcentajes visibles |
 | 12:56 | test: node --check app.js OK |
+| 13:09 | feat(ui): agregar ilustraciones SVG por rubro y modo infografia fullscreen |
+| 13:09 | fix(ui): quitar id duplicado de savingsRate |
+| 13:09 | test: node --check app.js OK, ids HTML OK, SVG XML OK |

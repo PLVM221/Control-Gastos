@@ -300,6 +300,28 @@ textarea:focus {
   min-width: 0;
 }
 
+.dashboard-mode .app-shell {
+  grid-template-columns: 1fr;
+  background: #f6f8fb;
+}
+
+.dashboard-mode .sidebar,
+.dashboard-mode .toolbar {
+  display: none;
+}
+
+.dashboard-mode .workspace {
+  width: min(1160px, 100%);
+  margin: 0 auto;
+  padding: 18px;
+}
+
+.dashboard-mode .plan-summary,
+.dashboard-mode .trend-section,
+.dashboard-mode .alerts-section {
+  display: none;
+}
+
 .toolbar {
   min-height: 76px;
   display: grid;
@@ -458,7 +480,7 @@ textarea:focus {
 
 .salary-plan {
   display: grid;
-  gap: 16px;
+  gap: 14px;
   padding: 20px;
   border: 1px solid #d4dfeb;
   border-radius: 8px;
@@ -472,7 +494,7 @@ textarea:focus {
   justify-content: space-between;
   gap: 16px;
   align-items: center;
-  padding: 6px 6px 10px;
+  padding: 2px 6px 12px;
   border-bottom: 4px solid #071f42;
 }
 
@@ -495,11 +517,12 @@ textarea:focus {
 }
 
 .plan-context {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
-  max-width: 420px;
+  max-width: 440px;
 }
 
 .plan-context span {
@@ -515,11 +538,11 @@ textarea:focus {
   box-shadow: 0 8px 18px rgba(7, 31, 66, .08);
 }
 
-.plan-context .scene-pill {
-  min-height: 54px;
-  padding: 0 16px;
-  background: linear-gradient(135deg, #e9f6ff, #eafff8);
-  color: #0b765f;
+.plan-hero-art {
+  grid-column: 1 / -1;
+  width: min(390px, 100%);
+  justify-self: center;
+  display: block;
 }
 
 .plan-context svg {
@@ -532,9 +555,19 @@ textarea:focus {
   height: 28px;
 }
 
+.plan-mini-action {
+  min-height: 38px;
+  border-radius: 8px;
+  padding: 0 12px;
+  background: #071f42;
+  color: #fff;
+  font-weight: 900;
+  box-shadow: 0 8px 18px rgba(7, 31, 66, .12);
+}
+
 .plan-layout {
   display: grid;
-  grid-template-columns: minmax(260px, 330px) minmax(0, 1fr);
+  grid-template-columns: minmax(270px, 330px) minmax(0, 1fr);
   gap: 16px;
   align-items: stretch;
 }
@@ -682,13 +715,14 @@ textarea:focus {
   place-items: center;
   color: #ffffff;
   box-shadow: inset -12px 0 24px rgba(0, 0, 0, .10);
+  overflow: hidden;
 }
 
-.plan-row-icon svg {
-  width: 56px;
-  height: 56px;
-  stroke-width: 2.4;
-  filter: drop-shadow(0 4px 7px rgba(0, 0, 0, .18));
+.plan-row-icon img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
 }
 
 .plan-row-copy {
@@ -1754,9 +1788,10 @@ tbody tr:hover {
     grid-row: span 3;
   }
 
-  .plan-row-icon svg {
+  .plan-row-icon img {
     width: 34px;
     height: 34px;
+    object-fit: contain;
   }
 
   .plan-row-copy {

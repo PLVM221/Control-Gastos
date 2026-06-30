@@ -14,36 +14,69 @@ const categoryLabels = {
   income: "Ingreso",
 };
 
-const categoryPlan = {
-  fixed: {
-    title: "Vivienda / fijos",
+const planBuckets = {
+  housing: {
+    title: "Renta (vivienda)",
     description: "Alquiler, expensas, cuotas base y compromisos mensuales",
-    icon: "home",
+    color: "#2378c9",
+    image: "assets/illustrations/home.svg",
+    keywords: ["alquiler", "renta", "vivienda", "expensa", "hipoteca"],
   },
-  additional: {
+  services: {
     title: "Servicios",
     description: "Luz, gas, agua, internet, telefonia y streaming",
-    icon: "utility-pole",
+    color: "#6f45b8",
+    image: "assets/illustrations/services.svg",
+    keywords: ["servicio", "luz", "gas", "agua", "internet", "telefono", "telefonia", "streaming", "tv"],
   },
-  casual: {
-    title: "Alimentacion / ocio",
-    description: "Supermercado, salidas, gustos personales y gastos variables",
-    icon: "shopping-cart",
+  food: {
+    title: "Alimentacion",
+    description: "Compras de supermercado, comida y articulos de consumo",
+    color: "#ef3f68",
+    image: "assets/illustrations/food.svg",
+    keywords: ["super", "supermercado", "comida", "alimento", "alimentacion", "verduleria", "carniceria"],
   },
-  card: {
-    title: "Tarjetas",
-    description: "Consumos y cuotas activas con tarjeta",
-    icon: "credit-card",
+  transport: {
+    title: "Transporte (vehiculo)",
+    description: "Combustible, mantenimiento, seguro, patente y movilidad",
+    color: "#f59b22",
+    image: "assets/illustrations/car.svg",
+    keywords: ["auto", "vehiculo", "combustible", "nafta", "seguro", "patente", "cochera", "transporte"],
   },
-  credit: {
-    title: "Creditos",
-    description: "Prestamos, financiaciones y cuotas activas",
-    icon: "landmark",
+  savings: {
+    title: "Ahorro",
+    description: "Ahorro para metas familiares, proyectos y futuro",
+    color: "#16a698",
+    image: "assets/illustrations/piggy.svg",
+    keywords: ["ahorro", "inversion", "meta", "futuro"],
   },
-  future: {
-    title: "Ahorro / futuro",
-    description: "Metas familiares, emergencias y compromisos proximos",
-    icon: "piggy-bank",
+  education: {
+    title: "Educacion",
+    description: "Escuela, utiles, actividades y salidas escolares",
+    color: "#6fb44f",
+    image: "assets/illustrations/education.svg",
+    keywords: ["educacion", "escuela", "colegio", "jardin", "utiles", "actividad"],
+  },
+  leisure: {
+    title: "Ocio / extras",
+    description: "Salidas ocasionales, gustos personales, regalos y extras",
+    color: "#80868b",
+    image: "assets/illustrations/leisure.svg",
+    keywords: ["ocio", "salida", "regalo", "extra", "gusto", "cine", "restaurant"],
+  },
+  emergency: {
+    title: "Fondo de emergencia",
+    description: "Reserva para imprevistos, salud, arreglos y emergencias",
+    color: "#f7bd31",
+    image: "assets/illustrations/emergency.svg",
+    keywords: ["emergencia", "imprevisto", "salud", "medico", "arreglo"],
+  },
+  cards: {
+    title: "Tarjetas / creditos",
+    description: "Consumos, cuotas, prestamos y financiaciones activas",
+    color: "#315b9f",
+    image: "assets/illustrations/cards.svg",
+    keywords: ["tarjeta", "credito", "prestamo", "cuota"],
   },
 };
 
@@ -62,12 +95,12 @@ const statusLabels = {
 };
 
 const categoryColors = {
-  fixed: "#2378c9",
-  additional: "#6f45b8",
-  casual: "#ef3f68",
-  card: "#f59b22",
-  credit: "#6fb44f",
-  future: "#16a698",
+  fixed: planBuckets.housing.color,
+  additional: planBuckets.services.color,
+  casual: planBuckets.leisure.color,
+  card: planBuckets.cards.color,
+  credit: planBuckets.cards.color,
+  future: planBuckets.savings.color,
   income: "#0d8f73",
 };
 
@@ -141,6 +174,7 @@ const els = {
   closeEntryBtn: document.querySelector("#closeEntryBtn"),
   entryModal: document.querySelector("#entryModal"),
   savingsRate: document.querySelector("#savingsRate"),
+  planSavingsRate: document.querySelector("#planSavingsRate"),
   incomeHint: document.querySelector("#incomeHint"),
   expenseHint: document.querySelector("#expenseHint"),
   balanceHint: document.querySelector("#balanceHint"),
@@ -229,6 +263,22 @@ function bindEvents() {
 
   document.querySelectorAll("[data-preset]").forEach((button) => {
     button.addEventListener("click", () => applyPreset(button.dataset.preset));
+  });
+
+  document.querySelectorAll("[data-plan-view]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.view = button.dataset.planView;
+      render();
+    });
+  });
+
+  document.querySelectorAll("[data-plan-open]").forEach((button) => {
+    button.addEventListener("click", () => {
+      resetForm();
+      applyPreset(button.dataset.planOpen === "income" ? "income" : "fixed");
+      els.formMode.textContent = button.dataset.planOpen === "income" ? "Nuevo ingreso" : "Nuevo gasto";
+      openEntryModal();
+    });
   });
 
   els.openEntryBtn.addEventListener("click", () => {
@@ -380,6 +430,7 @@ function renderShell() {
   Object.entries(els.views).forEach(([view, element]) => {
     element.classList.toggle("active", view === state.view);
   });
+  document.body.classList.toggle("dashboard-mode", state.view === "dashboard");
 }
 
 function renderDashboard() {
@@ -402,17 +453,11 @@ function renderDashboard() {
   els.balanceHint.textContent = balance >= 0 ? "Margen positivo" : "Deficit mensual";
   els.committedHint.textContent = income ? `${Math.round((expenses / income) * 100)}%` : "0%";
   els.savingsRate.textContent = `${savingsRate}% ahorro`;
+  els.planSavingsRate.textContent = `${savingsRate}% ahorro`;
   els.itemCount.textContent = `${active.length} items`;
   els.planTitle.textContent = formatMonth(state.month);
 
-  const byCategory = active
-    .filter((item) => item.kind === "expense")
-    .reduce((acc, item) => {
-      acc[item.category] = (acc[item.category] || 0) + monthlyAmount(item, state.month);
-      return acc;
-    }, {});
-
-  const rows = Object.entries(byCategory).sort((a, b) => b[1] - a[1]);
+  const rows = planRows(expenseItems).sort((a, b) => b.total - a.total);
 
   els.categoryBars.innerHTML = "";
   if (!rows.length) {
@@ -424,24 +469,19 @@ function renderDashboard() {
     return;
   }
 
-  rows.forEach(([category, total]) => {
+  rows.forEach((plan) => {
     const row = document.createElement("div");
-    const percent = income ? Math.round((total / income) * 1000) / 10 : 0;
-    const plan = categoryPlan[category] || {
-      title: categoryLabels[category] || "Sin categoria",
-      description: "Movimiento registrado en el mes",
-      icon: "circle-dollar-sign",
-    };
+    const percent = income ? Math.round((plan.total / income) * 1000) / 10 : 0;
     row.className = "plan-row";
     row.innerHTML = `
-      <div class="plan-row-icon" style="background: ${categoryColors[category]}">
-        <i data-lucide="${plan.icon}"></i>
+      <div class="plan-row-icon" style="background: ${plan.color}">
+        <img src="${plan.image}" alt="">
       </div>
       <div class="plan-row-copy">
-        <strong style="color: ${categoryColors[category]}">${plan.title}</strong>
+        <strong style="color: ${plan.color}">${plan.title}</strong>
         <span>${plan.description}</span>
       </div>
-      <strong class="plan-row-money">${money(total)}</strong>
+      <strong class="plan-row-money" style="color: ${plan.color}">${money(plan.total)}</strong>
       <strong class="plan-row-percent">${formatPercent(percent)}</strong>
     `;
     els.categoryBars.append(row);
@@ -667,7 +707,7 @@ function renderDonut(rows, baseTotal = 0) {
   const size = canvas.width;
   const center = size / 2;
   const radius = 94;
-  const total = rows.reduce((acc, [, value]) => acc + value, 0);
+  const total = rows.reduce((acc, row) => acc + row.total, 0);
   const percentBase = baseTotal || total;
 
   ctx.clearRect(0, 0, size, size);
@@ -680,13 +720,14 @@ function renderDonut(rows, baseTotal = 0) {
   }
 
   let start = -Math.PI / 2;
-  rows.forEach(([category, value]) => {
+  rows.forEach((plan) => {
+    const value = plan.total;
     const angle = (value / total) * Math.PI * 2;
     ctx.beginPath();
     ctx.moveTo(center, center);
     ctx.arc(center, center, radius, start, start + angle);
     ctx.closePath();
-    ctx.fillStyle = categoryColors[category];
+    ctx.fillStyle = plan.color;
     ctx.fill();
     ctx.lineWidth = 2;
     ctx.strokeStyle = "#ffffff";
@@ -712,8 +753,8 @@ function renderDonut(rows, baseTotal = 0) {
     const row = document.createElement("div");
     row.className = "legend-row";
     row.innerHTML = `
-      <span class="legend-dot" style="background: ${categoryColors[category]}"></span>
-      <span>${categoryLabels[category]}</span>
+      <span class="legend-dot" style="background: ${plan.color}"></span>
+      <span>${plan.title}</span>
       <strong>${formatPercent(Math.round((value / percentBase) * 1000) / 10)}</strong>
     `;
     els.donutLegend.append(row);
@@ -821,6 +862,36 @@ function sum(entries, month = state.month) {
   return entries.reduce((total, item) => total + monthlyAmount(item, month), 0);
 }
 
+function planRows(expenseItems) {
+  const rows = new Map();
+  expenseItems.forEach((item) => {
+    const bucketKey = planBucketFor(item);
+    const bucket = planBuckets[bucketKey];
+    const current = rows.get(bucketKey) || { ...bucket, total: 0 };
+    current.total += monthlyAmount(item, state.month);
+    rows.set(bucketKey, current);
+  });
+  return [...rows.values()].filter((row) => row.total > 0);
+}
+
+function planBucketFor(item) {
+  const text = normalizeText(`${item.name} ${item.notes || ""} ${categoryLabels[item.category] || ""}`);
+  const match = Object.entries(planBuckets).find(([, bucket]) => bucket.keywords.some((keyword) => text.includes(keyword)));
+  if (match) return match[0];
+  if (item.category === "fixed") return "housing";
+  if (item.category === "additional") return "services";
+  if (item.category === "card" || item.category === "credit") return "cards";
+  if (item.category === "future") return "savings";
+  return "leisure";
+}
+
+function normalizeText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
 function monthDiff(start, end) {
   const [startYear, startMonth] = start.split("-").map(Number);
   const [endYear, endMonth] = end.split("-").map(Number);
@@ -866,7 +937,7 @@ function formatPercent(value) {
 }
 
 function itemLabel(item) {
-  return categoryPlan[item.category]?.title || categoryLabels[item.category] || item.name;
+  return planBuckets[planBucketFor(item)]?.title || categoryLabels[item.category] || item.name;
 }
 
 function formatMonth(value) {

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 150" role="img" aria-label="Familia con vehiculo">
+  <rect width="520" height="150" fill="none"/>
+  <g transform="translate(20 18)">
+    <circle cx="42" cy="32" r="20" fill="#f2b37f"/>
+    <path d="M22 26c6-24 35-24 42-2-14-7-26 4-42 2z" fill="#2b1d1a"/>
+    <rect x="18" y="54" width="48" height="70" rx="18" fill="#153a6a"/>
+    <circle cx="105" cy="30" r="19" fill="#efaa79"/>
+    <path d="M83 33c1-30 42-30 44 1-14-16-30-16-44-1z" fill="#2a1713"/>
+    <rect x="78" y="52" width="54" height="72" rx="20" fill="#f47a32"/>
+    <circle cx="162" cy="48" r="16" fill="#f0b47f"/>
+    <path d="M145 45c5-20 30-20 35-1-10-6-22-3-35 1z" fill="#271712"/>
+    <rect x="140" y="66" width="44" height="58" rx="16" fill="#74b84a"/>
+    <circle cx="216" cy="50" r="16" fill="#edaa78"/>
+    <path d="M199 50c2-20 31-22 36 0-14-8-21 6-36 0z" fill="#3b2018"/>
+    <rect x="194" y="68" width="44" height="56" rx="16" fill="#f7bd31"/>
+  </g>
+  <g transform="translate(315 45)">
+    <path d="M20 54h150c8 0 14-6 14-14v-8c0-7-5-13-12-14l-28-4-26-22H67L46 15 25 25c-8 3-14 11-14 20v.5c0 5 4 8.5 9 8.5z" fill="#2478c8"/>
+    <path d="M73 4h41l21 19H59z" fill="#88c7ee"/>
+    <path d="M63 8h22v15H51zM91 8h20l17 15H91z" fill="#dff4ff"/>
+    <rect x="29" y="34" width="34" height="8" rx="4" fill="#08325f"/>
+    <rect x="139" y="32" width="28" height="7" rx="3.5" fill="#08325f"/>
+    <circle cx="52" cy="56" r="19" fill="#16283d"/>
+    <circle cx="52" cy="56" r="9" fill="#d7e4ee"/>
+    <circle cx="146" cy="56" r="19" fill="#16283d"/>
+    <circle cx="146" cy="56" r="9" fill="#d7e4ee"/>
+  </g>
+</svg>
