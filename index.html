@@ -80,74 +80,106 @@
       </section>
 
       <section class="view active" id="dashboardView">
-        <div class="metrics-grid">
-          <article class="metric metric-income">
-            <span><i class="metric-icon" data-lucide="arrow-down-circle"></i>Ingresos</span>
-            <strong id="incomeTotal">$0</strong>
-            <small id="incomeHint">0 movimientos</small>
-          </article>
-          <article class="metric metric-expense">
-            <span><i class="metric-icon" data-lucide="arrow-up-circle"></i>Gastos</span>
-            <strong id="expenseTotal">$0</strong>
-            <small id="expenseHint">0 movimientos</small>
-          </article>
-          <article class="metric metric-balance">
-            <span><i class="metric-icon" data-lucide="wallet"></i>Disponible</span>
-            <strong id="balanceTotal">$0</strong>
-            <small id="balanceHint">Balance mensual</small>
-          </article>
-          <article class="metric metric-committed">
-            <span><i class="metric-icon" data-lucide="gauge"></i>Comprometido</span>
-            <strong id="committedTotal">$0</strong>
-            <small id="committedHint">0% de ingresos</small>
-          </article>
-        </div>
-
-        <div class="insight-grid">
-          <section class="panel chart-panel">
-            <div class="panel-head">
-              <h3>Tendencia</h3>
-              <span>12 meses</span>
+        <section class="salary-plan" aria-label="Planificacion mensual del sueldo">
+          <div class="plan-hero">
+            <div>
+              <p class="eyebrow">Planificacion mensual del sueldo</p>
+              <h3 id="planTitle">Tu mes ordenado</h3>
             </div>
-            <canvas id="trendChart" height="180" aria-label="Tendencia mensual"></canvas>
-          </section>
-
-          <section class="panel chart-panel">
-            <div class="panel-head">
-              <h3>Mix de gastos</h3>
-              <span id="donutTotal">$0</span>
+            <div class="plan-context">
+              <span><i data-lucide="users"></i><strong id="itemCount">0 items</strong></span>
+              <span><i data-lucide="piggy-bank"></i><strong id="savingsRate">0% ahorro</strong></span>
             </div>
-            <div class="donut-layout">
-              <canvas id="donutChart" width="190" height="190" aria-label="Distribucion de gastos"></canvas>
-              <div class="legend" id="donutLegend"></div>
-            </div>
-          </section>
-
-          <section class="panel">
-            <div class="panel-head">
-              <h3>Alertas</h3>
-              <span id="alertCount">0</span>
-            </div>
-            <div class="list compact" id="alertsList"></div>
-          </section>
-        </div>
-
-        <div class="content-grid">
-          <section class="panel wide">
-            <div class="panel-head">
-              <h3>Distribucion</h3>
-              <span id="itemCount">0 items</span>
-            </div>
-            <div class="bars" id="categoryBars"></div>
-          </section>
-        </div>
-
-        <section class="panel wide">
-          <div class="panel-head">
-            <h3>Top gastos del mes</h3>
-            <span id="topTotal">0 principales</span>
           </div>
-          <div class="top-expenses" id="topExpenses"></div>
+
+          <div class="plan-layout">
+            <aside class="plan-sidebar">
+              <article class="income-card">
+                <span>Ingreso mensual neto</span>
+                <strong id="incomeTotal">$0</strong>
+                <small id="incomeHint">0 movimientos</small>
+              </article>
+
+              <section class="plan-card chart-panel">
+                <div class="plan-card-head">
+                  <h3>Distribucion porcentual</h3>
+                  <span id="donutTotal">$0</span>
+                </div>
+                <div class="donut-layout">
+                  <canvas id="donutChart" width="210" height="210" aria-label="Distribucion de gastos"></canvas>
+                  <div class="legend" id="donutLegend"></div>
+                </div>
+              </section>
+
+              <section class="rule-card">
+                <h3>Regla general</h3>
+                <p>Prioriza 50% o mas para necesidades</p>
+                <p>20% para ahorro</p>
+                <p>30% o menos para deseos</p>
+              </section>
+            </aside>
+
+            <section class="plan-table-wrap" aria-label="Desglose de gastos mensuales">
+              <div class="plan-table-head">
+                <span></span>
+                <strong>Desglose de gastos mensuales</strong>
+                <strong>Monto</strong>
+                <strong>%</strong>
+              </div>
+              <div class="plan-breakdown" id="categoryBars"></div>
+              <div class="plan-total-row">
+                <strong>Total</strong>
+                <span></span>
+                <strong id="expenseTotal">$0</strong>
+                <strong id="committedHint">0%</strong>
+              </div>
+            </section>
+          </div>
+
+          <div class="plan-summary">
+            <article class="summary-tile metric-balance">
+              <span><i class="metric-icon" data-lucide="wallet"></i>Disponible</span>
+              <strong id="balanceTotal">$0</strong>
+              <small id="balanceHint">Balance mensual</small>
+            </article>
+            <article class="summary-tile metric-committed">
+              <span><i class="metric-icon" data-lucide="gauge"></i>Comprometido</span>
+              <strong id="committedTotal">$0</strong>
+              <small>Gastos recurrentes</small>
+            </article>
+            <article class="summary-tile metric-expense">
+              <span><i class="metric-icon" data-lucide="arrow-up-circle"></i>Gastos</span>
+              <strong id="expenseHint">0 movimientos</strong>
+              <small>Registrados este mes</small>
+            </article>
+          </div>
+
+          <section class="tips-band">
+            <div class="tips-title"><i data-lucide="clipboard-check"></i><strong>Tips para cumplir tu plan</strong></div>
+            <div class="tips-grid" id="topExpenses"></div>
+          </section>
+
+          <section class="reminder-band">
+            <i data-lucide="lightbulb"></i>
+            <strong>Recorda:</strong>
+            <span>Gastar menos de lo que ganas hoy es construir tranquilidad para manana.</span>
+          </section>
+        </section>
+
+        <section class="panel wide trend-section">
+          <div class="panel-head">
+            <h3>Tendencia</h3>
+            <span>12 meses</span>
+          </div>
+          <canvas id="trendChart" height="180" aria-label="Tendencia mensual"></canvas>
+        </section>
+
+        <section class="panel wide alerts-section">
+          <div class="panel-head">
+            <h3>Alertas</h3>
+            <span id="alertCount">0</span>
+          </div>
+          <div class="list compact" id="alertsList"></div>
         </section>
       </section>
 

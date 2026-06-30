@@ -14,6 +14,39 @@ const categoryLabels = {
   income: "Ingreso",
 };
 
+const categoryPlan = {
+  fixed: {
+    title: "Gastos fijos",
+    description: "Alquiler, servicios base, abonos y compromisos mensuales",
+    icon: "home",
+  },
+  additional: {
+    title: "Servicios y extras",
+    description: "Servicios, mantenimiento, compras o pagos adicionales",
+    icon: "plug-zap",
+  },
+  casual: {
+    title: "Compras casuales",
+    description: "Supermercado, salidas, gustos personales y gastos variables",
+    icon: "shopping-cart",
+  },
+  card: {
+    title: "Tarjetas",
+    description: "Consumos y cuotas activas con tarjeta",
+    icon: "credit-card",
+  },
+  credit: {
+    title: "Creditos",
+    description: "Prestamos, financiaciones y cuotas de credito",
+    icon: "landmark",
+  },
+  future: {
+    title: "Futuro",
+    description: "Gastos planificados, metas, ahorro o compromisos proximos",
+    icon: "calendar-clock",
+  },
+};
+
 const frequencyLabels = {
   monthly: "Mensual",
   once: "Unica vez",
@@ -119,7 +152,6 @@ const els = {
   alertsList: document.querySelector("#alertsList"),
   alertCount: document.querySelector("#alertCount"),
   topExpenses: document.querySelector("#topExpenses"),
-  topTotal: document.querySelector("#topTotal"),
   toast: document.querySelector("#toast"),
   activityList: document.querySelector("#activityList"),
   activityCount: document.querySelector("#activityCount"),
@@ -133,6 +165,7 @@ const els = {
   rosarioTime: document.querySelector("#rosarioTime"),
   rosarioWeather: document.querySelector("#rosarioWeather"),
   weatherLabel: document.querySelector("#weatherLabel"),
+  planTitle: document.querySelector("#planTitle"),
 };
 
 init();
@@ -367,9 +400,10 @@ function renderDashboard() {
   els.incomeHint.textContent = `${incomes.length} ingresos`;
   els.expenseHint.textContent = `${expenseItems.length} gastos`;
   els.balanceHint.textContent = balance >= 0 ? "Margen positivo" : "Deficit mensual";
-  els.committedHint.textContent = `${committedRate}% de ingresos`;
+  els.committedHint.textContent = income ? `${Math.round((expenses / income) * 100)}%` : "0%";
   els.savingsRate.textContent = `${savingsRate}% ahorro`;
   els.itemCount.textContent = `${active.length} items`;
+  els.planTitle.textContent = formatMonth(state.month);
 
   const byCategory = active
     .filter((item) => item.kind === "expense")
@@ -378,7 +412,6 @@ function renderDashboard() {
       return acc;
     }, {});
 
-  const max = Math.max(...Object.values(byCategory), 1);
   const rows = Object.entries(byCategory).sort((a, b) => b[1] - a[1]);
 
   els.categoryBars.innerHTML = "";
@@ -393,15 +426,23 @@ function renderDashboard() {
 
   rows.forEach(([category, total]) => {
     const row = document.createElement("div");
-    row.className = "bar-row";
+    const percent = income ? Math.round((total / income) * 1000) / 10 : 0;
+    const plan = categoryPlan[category] || {
+      title: categoryLabels[category] || "Sin categoria",
+      description: "Movimiento registrado en el mes",
+      icon: "circle-dollar-sign",
+    };
+    row.className = "plan-row";
     row.innerHTML = `
-      <div class="bar-meta">
-        <strong>${categoryLabels[category]}</strong>
-        <span>${money(total)}</span>
+      <div class="plan-row-icon" style="background: ${categoryColors[category]}">
+        <i data-lucide="${plan.icon}"></i>
       </div>
-      <div class="bar-track">
-        <div class="bar-fill" style="width: ${Math.round((total / max) * 100)}%; background: ${categoryColors[category]}"></div>
+      <div class="plan-row-copy">
+        <strong style="color: ${categoryColors[category]}">${plan.title}</strong>
+        <span>${plan.description}</span>
       </div>
+      <strong class="plan-row-money">${money(total)}</strong>
+      <strong class="plan-row-percent">${formatPercent(percent)}</strong>
     `;
     els.categoryBars.append(row);
   });
@@ -534,23 +575,41 @@ function renderTopExpenses(expenseItems) {
   const rows = expenseItems
     .map((item) => ({ ...item, monthAmount: monthlyAmount(item, state.month) }))
     .sort((a, b) => b.monthAmount - a.monthAmount)
-    .slice(0, 5);
+    .slice(0, 4);
 
   els.topExpenses.innerHTML = "";
-  els.topTotal.textContent = `${rows.length} principales`;
+  const tips = [
+    {
+      icon: "list-checks",
+      title: "Segui tus gastos",
+      text: rows[0] ? `Mayor rubro: ${escapeHtml(itemLabel(rows[0]))}.` : "Carga gastos para ver prioridades.",
+    },
+    {
+      icon: "banknote",
+      title: "Controla efectivo",
+      text: "Usa efectivo o transferencias para medir mejor.",
+    },
+    {
+      icon: "shopping-basket",
+      title: "Planifica compras",
+      text: "Agrupa compras y evita pagos impulsivos.",
+    },
+    {
+      icon: "bar-chart-3",
+      title: "Revisa cada mes",
+      text: "Ajusta importes y presupuestos al cerrar el periodo.",
+    },
+  ];
 
-  if (!rows.length) {
-    els.topExpenses.append(emptyState());
-    return;
-  }
-
-  rows.forEach((item) => {
+  tips.forEach((tip) => {
     const div = document.createElement("div");
-    div.className = "top-card";
+    div.className = "tip-item";
     div.innerHTML = `
-      <strong>${escapeHtml(item.name)}</strong>
-      <span>${money(item.monthAmount)}</span>
-      <small class="muted">${categoryLabels[item.category]} - ${frequencyLabels[item.frequency]}</small>
+      <i data-lucide="${tip.icon}"></i>
+      <div>
+        <strong>${tip.title}</strong>
+        <span>${tip.text}</span>
+      </div>
     `;
     els.topExpenses.append(div);
   });
@@ -634,7 +693,7 @@ function renderDonut(rows) {
     row.innerHTML = `
       <span class="legend-dot" style="background: ${categoryColors[category]}"></span>
       <span>${categoryLabels[category]}</span>
-      <strong>${Math.round((value / total) * 100)}%</strong>
+      <strong>${formatPercent(Math.round((value / total) * 1000) / 10)}</strong>
     `;
     els.donutLegend.append(row);
   });
@@ -787,6 +846,14 @@ function money(value) {
     currency: "ARS",
     maximumFractionDigits: 0,
   }).format(value || 0);
+}
+
+function formatPercent(value) {
+  return `${new Intl.NumberFormat("es-AR", { maximumFractionDigits: 1 }).format(value || 0)}%`;
+}
+
+function itemLabel(item) {
+  return categoryPlan[item.category]?.title || categoryLabels[item.category] || item.name;
 }
 
 function formatMonth(value) {
