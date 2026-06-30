@@ -80,6 +80,8 @@ const planBuckets = {
   },
 };
 
+const planBucketOrder = ["housing", "services", "food", "transport", "savings", "education", "leisure", "emergency", "cards"];
+
 const frequencyLabels = {
   monthly: "Mensual",
   once: "Unica vez",
@@ -457,7 +459,7 @@ function renderDashboard() {
   els.itemCount.textContent = `${active.length} items`;
   els.planTitle.textContent = formatMonth(state.month);
 
-  const rows = planRows(expenseItems).sort((a, b) => b.total - a.total);
+  const rows = planRows(expenseItems).sort((a, b) => planBucketOrder.indexOf(a.key) - planBucketOrder.indexOf(b.key));
 
   els.categoryBars.innerHTML = "";
   if (!rows.length) {
@@ -706,7 +708,7 @@ function renderDonut(rows, baseTotal = 0) {
   const ctx = canvas.getContext("2d");
   const size = canvas.width;
   const center = size / 2;
-  const radius = 94;
+  const radius = Math.max(70, center - 12);
   const total = rows.reduce((acc, row) => acc + row.total, 0);
   const percentBase = baseTotal || total;
 
@@ -740,7 +742,7 @@ function renderDonut(rows, baseTotal = 0) {
       const x = center + Math.cos(middle) * labelRadius;
       const y = center + Math.sin(middle) * labelRadius;
       ctx.fillStyle = "#ffffff";
-      ctx.font = "900 15px Manrope, sans-serif";
+      ctx.font = "900 18px Roboto Condensed, Manrope, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.shadowColor = "rgba(7, 26, 52, .38)";
@@ -867,7 +869,7 @@ function planRows(expenseItems) {
   expenseItems.forEach((item) => {
     const bucketKey = planBucketFor(item);
     const bucket = planBuckets[bucketKey];
-    const current = rows.get(bucketKey) || { ...bucket, total: 0 };
+    const current = rows.get(bucketKey) || { ...bucket, key: bucketKey, total: 0 };
     current.total += monthlyAmount(item, state.month);
     rows.set(bucketKey, current);
   });

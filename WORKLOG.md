@@ -70,3 +70,5 @@
 | 13:09 | feat(ui): agregar ilustraciones SVG por rubro y modo infografia fullscreen |
 | 13:09 | fix(ui): quitar id duplicado de savingsRate |
 | 13:09 | test: node --check app.js OK, ids HTML OK, SVG XML OK |
+| 13:15 | style(ui): ajustar formato, tipografia, tabla, colores e iconos al JPG de referencia |
+| 13:15 | test: node --check app.js OK, ids HTML OK, SVG XML OK |
